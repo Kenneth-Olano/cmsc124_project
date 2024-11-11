@@ -60,34 +60,34 @@ def tokenize_line(line, lexemes):
     # tokens.split()
     # categorize_line(line, lexemes)
 
-def categorize_token(token):
-    if token in constructs:
-        return 2
-    else:
-        for i in literal_rules:
-            isLiteral = re.match(i, token)
-            if isLiteral != None:
-                break
-        if isLiteral != None:
-            return 3
-        elif re.match(r"^([a-zA-Z])[a-zA-Z0-9_]*$", token): #is identifier
-            return 1
-        else:
-            return 0
+# def categorize_token(token):
+#     if token in constructs:
+#         return 2
+#     else:
+#         for i in literal_rules:
+#             isLiteral = re.match(i, token)
+#             if isLiteral != None:
+#                 break
+#         if isLiteral != None:
+#             return 3
+#         elif re.match(r"^([a-zA-Z])[a-zA-Z0-9_]*$", token): #is identifier
+#             return 1
+#         else:
+#             return 0
 
 
-def categorize_line(line, lexemes):
-    category = categorize_token(i) #return 1 if identifier, return 2 if literal, if return 3 if keyword
-    match category:
-        case 1:
-            lexemes["identifiers"].append(i)
-        case 2:
-            lexemes["literals"].append(i)
-        case 3:
-            lexemes["keywords"].append(i)
-        case _:
-            print(i)
-            print("ERROR! Illegal character detected.")
+# def categorize_line(line, lexemes):
+#     category = categorize_token(i) #return 1 if identifier, return 2 if literal, if return 3 if keyword
+#     match category:
+#         case 1:
+#             lexemes["identifiers"].append(i)
+#         case 2:
+#             lexemes["literals"].append(i)
+#         case 3:
+#             lexemes["keywords"].append(i)
+#         case _:
+#             print(i)
+#             print("ERROR! Illegal character detected.")
         
             
 get_file()
