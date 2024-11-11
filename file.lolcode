@@ -1,0 +1,16 @@
+HAI
+  I HAS A NUM1
+  I HAS A NUM2
+  I HAS A RESULT
+
+  VISIBLE "Enter the first number: "
+  GIMMEH NUM1
+
+  VISIBLE "Enter the second number: "
+  GIMMEH NUM2
+
+  RESULT R SUM OF NUM1 AN NUM2
+
+  VISIBLE "The sum is: "
+  VISIBLE RESULT
+KTHXBYE
