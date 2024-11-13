@@ -12,6 +12,10 @@ constructs = set([
     "WILE", "IM OUTTA YR", "HOW IZ I", "IF U SAY SO", "GTFO", "FOUND YR", "I IZ", "MKAY", "AN"
 ])
 
+keyword_types = {
+    "HAI":"Code Delimiter", "KTHXBYE": "Code Delimiter", "WAZZUP": "Variable Declaration"
+}
+
 # regex patterns for literals
 literal_rules = [
     r"\s-?[0-9]+\s",           # integer literals
@@ -35,8 +39,10 @@ def get_file():
     
     try:
         with open(file_path, 'r') as lol_file:
+            line_cnt = 0
             for line in lol_file:
-                tokenize_line(line, lexemes, all_tokens)
+                tokenize_line(line, lexemes, all_tokens, line_cnt)
+                line_cnt+=1
         
         # display the lexemes in the GUI
         display_lexemes(lexemes, all_tokens)
@@ -44,14 +50,14 @@ def get_file():
     except Exception as e:
         messagebox.showerror("Error", f"An error occurred while reading the file:\n{e}")
 
-def tokenize_line(line, lexemes, all_tokens):
+def tokenize_line(line, lexemes, all_tokens, line_cnt):
     # track positions of found keywords and literals to exclude them from identifier checks
     positions = {"keywords": [], "literals": [], "identifiers": []}
-
+    error_flag = 0 #0 means error has occurred and 1 means error has not occurred yet
     # identify keywords (constructs) first
     # We create a regular expression pattern to match any keyword in the constructs set
     keywords = re.finditer(r"\b(?:{})\b".format("|".join(map(re.escape, constructs))), line)
-    
+    # print(keywords)
     # iterate over all the keyword matches found in the line
     for keyword in keywords:
         # add the matched keyword to the lexemes dictionary under 'keywords'
@@ -60,6 +66,7 @@ def tokenize_line(line, lexemes, all_tokens):
         all_tokens.append((keyword.group().strip(), "Keyword"))
         # store the position of the keyword (start and end indices)
         positions["keywords"].append(keyword.span())
+        # error_flag = 0
 
     #does the same for literals
     for rule in literal_rules: 
@@ -69,6 +76,8 @@ def tokenize_line(line, lexemes, all_tokens):
                 lexemes["literals"].append(literal.group().strip())
                 all_tokens.append((literal.group().strip(), "Literal"))
                 positions["literals"].append(literal.span())
+                # if error_flag == :
+                #     error_flag = 1
 
     #does the same for identifiers
     identifiers = re.finditer(identifier_rule, line)
@@ -81,6 +90,20 @@ def tokenize_line(line, lexemes, all_tokens):
             lexemes["identifiers"].append(identifier_text)
             all_tokens.append((identifier_text, "Identifier"))
             positions["identifiers"].append(identifier.span())
+            # print(identifier_text)
+
+    remaining_text = re.finditer(r"\S+", line)  # Find non-whitespace sequences in the line
+    for text in remaining_text:
+        if not (is_within_positions(text.span(), positions["keywords"]) or
+                is_within_positions(text.span(), positions["literals"]) or
+                is_within_positions(text.span(), positions["identifiers"])):
+            # Add to lexemes as an error (for display purposes, if needed)
+            lexemes.setdefault("errors", []).append(text.group().strip())
+            # Add the error and classification to all_tokens
+            all_tokens.append((text.group().strip(), "Error"))
+            if len(lexemes["errors"]) > 0:
+                print(f"ERROR: Illegal character found in line {line_cnt}: {lexemes["errors"][0]}")
+
 
 def is_within_positions(span, positions):
     for start, end in positions:
