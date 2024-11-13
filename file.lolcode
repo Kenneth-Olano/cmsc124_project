@@ -4,6 +4,7 @@ HAI
   I HAS A RESULT
 
   VISIBLE "Enter the first number: "
+  VISIBLE 12.345
   GIMMEH NUM1
 
   VISIBLE "Enter the second number: "
@@ -13,4 +14,5 @@ HAI
 
   VISIBLE "The sum is: "
   VISIBLE RESULT
+  []
 KTHXBYE
