@@ -138,7 +138,8 @@ def update_line_numbers():
     line_numbers_widget.delete("1.0", tk.END)  # Clear the previous line numbers
 
     # Insert line numbers
-    line_numbers_widget.insert("1.0", "\n".join(str(i + 1) for i in range(line_count)))
+    for i in range(line_count):
+        line_numbers_widget.insert(f"{i + 1}.0", f"{i + 1}\n", "center")
     line_numbers_widget.configure(state="disabled")  # Make it non-editable
     
 
@@ -152,6 +153,13 @@ def append_terminal_output(message):
     terminal_widget.insert(tk.END, "> " + message + "\n")
     terminal_widget.configure(state="disabled")
     terminal_widget.see(tk.END)  # Auto-scroll to the end
+
+def on_scroll(*args):
+    text_widget.yview(*args)
+    line_numbers_widget.yview(*args)
+
+def on_text_scroll(*args):
+    line_numbers_widget.yview_moveto(text_widget.yview()[0])
 
 # GUI setup
 root = tk.Tk()
@@ -174,7 +182,7 @@ execute_button.grid(row=0, column=1, padx=10, pady=10)
 
 # configure the columns to allow for a scrollbar between the tables
 frame.grid_columnconfigure(1, weight=1, minsize=500)  # first table column
-frame.grid_columnconfigure(0, weight=0)                # scrollbar column
+frame.grid_columnconfigure(0, weight=0, minsize=5)                # scrollbar column
 frame.grid_columnconfigure(2, weight=1, minsize=500)  # second table column
 
 # add a text widget for displaying lexemes
@@ -202,11 +210,18 @@ scrollbar2.grid(row=1, column=3, sticky="ns", padx=10)
 tree2.configure(yscrollcommand=scrollbar2.set)
 
 # Add two Text widgets: one for code and another for line numbers
-line_numbers_widget = tk.Text(frame, width=2, height=15, state="disabled", bg="lightgray")
+line_numbers_widget = tk.Text(frame, width=5, height=15, state="disabled", bg="lightgray")
 line_numbers_widget.grid(row=1, column=0, pady=10, sticky ="wns")
 # add a vertical scrollbar for the text line widget
 line_numbers_widget.configure(yscrollcommand=text_scrollbar.set)
+line_numbers_widget.tag_configure("center", justify="center")
+# textline_scrollbar = ttk.Scrollbar(frame, orient="vertical", command=line_numbers_widget.yview)
+text_scrollbar = ttk.Scrollbar(frame, orient="vertical", command=on_scroll)
+text_scrollbar.grid(row=1, column=1, sticky="nse", padx=10)
 
+text_widget.configure(yscrollcommand=text_scrollbar.set)
+line_numbers_widget.configure(yscrollcommand=text_scrollbar.set)
+text_widget['yscrollcommand'] = on_text_scroll
 # Bind the function to update line numbers on any text change
 text_widget.bind("<KeyRelease>", on_text_change)  # On key release
 text_widget.bind("<ButtonRelease-1>", on_text_change)  # On mouse click
@@ -221,5 +236,7 @@ terminal_widget.configure(state="disabled")
 terminal_scrollbar = ttk.Scrollbar(frame, orient="vertical", command=terminal_widget.yview)
 terminal_scrollbar.grid(row=2, column=4, sticky="ns")
 terminal_widget.configure(yscrollcommand=terminal_scrollbar.set)
+
+# Attach scrollbar to both widgets
 
 root.mainloop()
