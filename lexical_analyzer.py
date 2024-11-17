@@ -162,11 +162,15 @@ root.geometry("1500x700")
 frame = tk.Frame(root)
 frame.pack(padx=20, pady=20, fill=tk.BOTH, expand=True)
 
+button_frame = tk.Frame(frame)
+button_frame.grid(row=0, column=1, sticky="w")
 # file load button
-load_button = tk.Button(frame, text="Load LOLcode File", command=get_file, height=2, width=20, bg="lightblue")
-load_button.grid(row=0, column=0, padx=10, pady=10, columnspan=2, sticky='e')
-save_button = tk.Button(frame, text="Save LOLcode File", command=None, height=2, width=20, bg="lightblue")
-save_button.grid(row=0, column=1, padx=10, pady=10, columnspan=2)
+load_button = tk.Button(button_frame, text="Load LOLcode File", command=get_file, height=2, width=20, bg="lightblue")
+load_button.grid(row=0, column=0, padx=10, pady=10)
+# load_button.pack(side="left", padx=5)
+execute_button = tk.Button(button_frame, text="Execute LOLcode File", command=None, height=2, width=30, bg="green", fg="white")
+execute_button.grid(row=0, column=1, padx=10, pady=10)
+# load_button.pack(side="left", padx=5)
 
 # configure the columns to allow for a scrollbar between the tables
 frame.grid_columnconfigure(1, weight=1, minsize=500)  # first table column
@@ -190,7 +194,7 @@ tree2.grid(row=1, column=2, padx=10, pady=10, sticky="nsew")
 # set the column headings for the second table
 for col in columns2:
     tree2.heading(col, text=col)
-    tree2.column(col, width=300, anchor="center")
+    tree2.column(col, width=100, anchor="center")
 
 # add a scrollbar for the second treeview
 scrollbar2 = ttk.Scrollbar(frame, orient="vertical", command=tree2.yview)
