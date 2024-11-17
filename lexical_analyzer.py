@@ -1,3 +1,4 @@
+import os
 import re
 import tkinter as tk
 from tkinter import filedialog, messagebox, ttk
@@ -27,7 +28,7 @@ literal_rules = [
 
 # regex pattern for identifiers
 identifier_rule = r"[a-zA-Z][a-zA-Z0-9_]*"
-
+code_line = []
 def get_file():
     # open file dialog to select a LOLcode file
     file_path = filedialog.askopenfilename(title="Open LOLcode file", filetypes=[("LOLcode files", "*.lolcode"), ("All files", "*.*")])
@@ -39,13 +40,17 @@ def get_file():
     
     try:
         with open(file_path, 'r') as lol_file:
-            line_cnt = 0
+            line_cnt = 1
             for line in lol_file:
+                code_line.append(line)
                 tokenize_line(line, lexemes, all_tokens, line_cnt)
                 line_cnt+=1
         
         # display the lexemes in the GUI
         display_lexemes(lexemes, all_tokens)
+        update_line_numbers()
+        # print(lol_file)
+        append_terminal_output(f"\"{os.path.basename(file_path)}\" successfully read!")
     
     except Exception as e:
         messagebox.showerror("Error", f"An error occurred while reading the file:\n{e}")
@@ -112,25 +117,41 @@ def is_within_positions(span, positions):
     return False
 
 def display_lexemes(lexemes, all_tokens):
-    # clear the treeviews before displaying new data
-    for item in tree1.get_children():
-        tree1.delete(item)
+    text_widget.delete("1.0", tk.END)
     for item in tree2.get_children():
         tree2.delete(item)
-    
-    # insert the lexemes into the first treeview (keywords, literals, identifiers)
+
+    # display lexemes in the text widget
     max_len = max(len(lexemes["keywords"]), len(lexemes["literals"]), len(lexemes["identifiers"]))
-    for i in range(max_len):
-        keyword = lexemes["keywords"][i] if i < len(lexemes["keywords"]) else ""
-        literal = lexemes["literals"][i] if i < len(lexemes["literals"]) else ""
-        identifier = lexemes["identifiers"][i] if i < len(lexemes["identifiers"]) else ""
-        
-        # insert into the first table with the three columns (keywords, literals, identifiers)
-        tree1.insert("", "end", values=(keyword, literal, identifier))
-    
-    # insert tokens in order into the second treeview (token - classification)
+    for i in range(len(code_line)):
+
+        line_text = f"{code_line[i].strip()}\n"
+        text_widget.insert(tk.END, line_text)
+
+    # insert tokens in order into the second Treeview (token - classification)
     for token, classification in all_tokens:
         tree2.insert("", "end", values=(token, classification))
+# Function to update line numbers in the non-editable column
+def update_line_numbers():
+    line_count = int(text_widget.index("end-1c").split('.')[0])  # Get the total number of lines
+    line_numbers_widget.configure(state="normal")
+    line_numbers_widget.delete("1.0", tk.END)  # Clear the previous line numbers
+
+    # Insert line numbers
+    line_numbers_widget.insert("1.0", "\n".join(str(i + 1) for i in range(line_count)))
+    line_numbers_widget.configure(state="disabled")  # Make it non-editable
+    
+
+# Function to handle text modifications and update line numbers
+def on_text_change(event=None):
+    update_line_numbers()
+    line_numbers_widget.yview_moveto(text_widget.yview()[0])
+
+def append_terminal_output(message):
+    terminal_widget.configure(state="normal")
+    terminal_widget.insert(tk.END, "> " + message + "\n")
+    terminal_widget.configure(state="disabled")
+    terminal_widget.see(tk.END)  # Auto-scroll to the end
 
 # GUI setup
 root = tk.Tk()
@@ -143,22 +164,23 @@ frame.pack(padx=20, pady=20, fill=tk.BOTH, expand=True)
 
 # file load button
 load_button = tk.Button(frame, text="Load LOLcode File", command=get_file, height=2, width=20, bg="lightblue")
-load_button.grid(row=0, column=0, padx=10, pady=10, columnspan=2)
+load_button.grid(row=0, column=0, padx=10, pady=10, columnspan=2, sticky='e')
+save_button = tk.Button(frame, text="Save LOLcode File", command=None, height=2, width=20, bg="lightblue")
+save_button.grid(row=0, column=1, padx=10, pady=10, columnspan=2)
 
 # configure the columns to allow for a scrollbar between the tables
-frame.grid_columnconfigure(0, weight=1, minsize=500)  # first table column
-frame.grid_columnconfigure(1, weight=0)                # scrollbar column
+frame.grid_columnconfigure(1, weight=1, minsize=500)  # first table column
+frame.grid_columnconfigure(0, weight=0)                # scrollbar column
 frame.grid_columnconfigure(2, weight=1, minsize=500)  # second table column
 
-# add the first Treeview (table) for displaying lexemes
-columns1 = ("Keywords", "Literals", "Identifiers")
-tree1 = ttk.Treeview(frame, columns=columns1, show="headings", height=15)
-tree1.grid(row=1, column=0, padx=10, pady=10, sticky="nsew")
+# add a text widget for displaying lexemes
+text_widget = tk.Text(frame, wrap="word", height=15, width=60)
+text_widget.grid(row=1, column=1, padx=10, pady=10, sticky="nsew")
 
-# set the column headings for the first table
-for col in columns1:
-    tree1.heading(col, text=col)
-    tree1.column(col, width=200, anchor="center")
+# add a vertical scrollbar for the text widget
+text_scrollbar = ttk.Scrollbar(frame, orient="vertical", command=text_widget.yview)
+text_scrollbar.grid(row=1, column=2, sticky="ns", padx=10)
+text_widget.configure(yscrollcommand=text_scrollbar.set)
 
 # add the second Treeview (table) for displaying token - classification
 columns2 = ("Token", "Classification")
@@ -170,14 +192,30 @@ for col in columns2:
     tree2.heading(col, text=col)
     tree2.column(col, width=300, anchor="center")
 
-# add a scrollbar between the two treeviews
-scrollbar = ttk.Scrollbar(frame, orient="vertical", command=tree1.yview)
-scrollbar.grid(row=1, column=1, sticky="ns", padx=10)
-tree1.configure(yscrollcommand=scrollbar.set)
-
 # add a scrollbar for the second treeview
 scrollbar2 = ttk.Scrollbar(frame, orient="vertical", command=tree2.yview)
 scrollbar2.grid(row=1, column=3, sticky="ns", padx=10)
 tree2.configure(yscrollcommand=scrollbar2.set)
+
+# Add two Text widgets: one for code and another for line numbers
+line_numbers_widget = tk.Text(frame, width=2, height=15, state="disabled", bg="lightgray")
+line_numbers_widget.grid(row=1, column=0, pady=10, sticky ="wns")
+# add a vertical scrollbar for the text line widget
+line_numbers_widget.configure(yscrollcommand=text_scrollbar.set)
+
+# Bind the function to update line numbers on any text change
+text_widget.bind("<KeyRelease>", on_text_change)  # On key release
+text_widget.bind("<ButtonRelease-1>", on_text_change)  # On mouse click
+
+terminal_widget = tk.Text(frame, wrap="word", height=10, bg="black", fg="white", insertbackground="white")
+terminal_widget.grid(row=2, column=0, columnspan=4, padx=10, pady=10, sticky="nsew")
+
+# Configure the terminal widget to be non-editable (optional)
+terminal_widget.configure(state="disabled")
+
+# Add a vertical scrollbar for the terminal
+terminal_scrollbar = ttk.Scrollbar(frame, orient="vertical", command=terminal_widget.yview)
+terminal_scrollbar.grid(row=2, column=4, sticky="ns")
+terminal_widget.configure(yscrollcommand=terminal_scrollbar.set)
 
 root.mainloop()
