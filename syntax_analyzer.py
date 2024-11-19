@@ -55,18 +55,22 @@ def syntax_analyzer(lexemes):
         # print(lexeme)
         if lexeme[1] == "Identifier":
             # print(lexeme)
-            if len(loop_stack) > 0 and (loop_stack[len(loop_stack)-1] == "WILE" or loop_stack[len(loop_stack)-1] == "TIL"):
-                loop_stack.append(lexeme)
-            elif len(loop_stack) > 0 and (loop_stack[len(loop_stack)-1] != "WILE" or loop_stack[len(loop_stack)-1] != "TIL"):
-                messagebox.showerror("SyntaxError", f"No loop label provided.")
-                print("No loop label provided.")
-                # return
-            if len(loop_stack) > 0 and (loop_stack[len(loop_stack)-1] == "IM OUTTA YR") and len(loop_stack) == 6 and "IM IN YR" in loop_stack:
-                loop_stack.clear()
-            elif len(loop_stack) > 0 and (loop_stack[len(loop_stack)-1] != "IM OUTTA YR") and len(loop_stack) == 6 and "IM IN YR" in loop_stack:
-                messagebox.showerror("SyntaxError", f"Loop not properly delimited. No 'IM OUTTA YR' detected.")
-                print("Loop not properly delimited. No 'IM OUTTA YR' detected.")
-                # return
+            if len(loop_stack) > 0 and (loop_stack[len(loop_stack)-1][1] == "Identifier"):
+                pass
+            else:
+                if len(loop_stack) > 0 and (loop_stack[len(loop_stack)-1] == "WILE" or loop_stack[len(loop_stack)-1] == "TIL"):
+                    loop_stack.append(lexeme)
+                elif len(loop_stack) > 0 and (loop_stack[len(loop_stack)-1] == "IM OUTTA YR") and len(loop_stack) == 6 and "IM IN YR" in loop_stack:
+                    loop_stack.clear()
+                elif len(loop_stack) > 0 and (loop_stack[len(loop_stack)-1] != "WILE" or loop_stack[len(loop_stack)-1] != "TIL"):
+                    messagebox.showerror("SyntaxError", f"No loop label provided.")
+                    print(lexeme)
+                    print("No loop label provided.")
+                    return
+                elif len(loop_stack) > 0 and (loop_stack[len(loop_stack)-1] != "IM OUTTA YR") and len(loop_stack) == 6 and "IM IN YR" in loop_stack:
+                    messagebox.showerror("SyntaxError", f"Loop not properly delimited. No 'IM OUTTA YR' detected.")
+                    print("Loop not properly delimited. No 'IM OUTTA YR' detected.")
+                    return
         for keys in constructs.keys():
             if lexeme[0] in constructs[keys]:
                 if keys == "programdelimiter":
