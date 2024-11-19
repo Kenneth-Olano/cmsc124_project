@@ -2,6 +2,7 @@ import os
 import re
 import tkinter as tk
 from tkinter import filedialog, messagebox, ttk
+import syntax_analyzer
 
 # set of LOLcode keywords
 constructs = set([
@@ -31,7 +32,7 @@ identifier_rule = r"[a-zA-Z][a-zA-Z0-9_]*"
 code_line = []
 def get_file():
     # open file dialog to select a LOLcode file
-    file_path = filedialog.askopenfilename(title="Open LOLcode file", filetypes=[("LOLcode files", "*.lolcode"), ("All files", "*.*")])
+    file_path = filedialog.askopenfilename(title="Open LOLcode file", filetypes=[("LOLcode files", "*.lol"), ("All files", "*.*")])
     if not file_path:
         return
     
@@ -51,7 +52,8 @@ def get_file():
         update_line_numbers()
         # print(lol_file)
         append_terminal_output(f"\"{os.path.basename(file_path)}\" successfully read!")
-    
+        syntax_analyzer.syntax_analyzer(all_tokens)
+        return all_tokens
     except Exception as e:
         messagebox.showerror("Error", f"An error occurred while reading the file:\n{e}")
 
@@ -107,7 +109,10 @@ def tokenize_line(line, lexemes, all_tokens, line_cnt):
             # Add the error and classification to all_tokens
             all_tokens.append((text.group().strip(), "Error"))
             if len(lexemes["errors"]) > 0:
+                print(lexemes["errors"])
                 print(f"ERROR: Illegal character found in line {line_cnt}: {lexemes["errors"][0]}")
+    
+    
 
 
 def is_within_positions(span, positions):
@@ -127,10 +132,11 @@ def display_lexemes(lexemes, all_tokens):
 
         line_text = f"{code_line[i].strip()}\n"
         text_widget.insert(tk.END, line_text)
-
+    
     # insert tokens in order into the second Treeview (token - classification)
     for token, classification in all_tokens:
         tree2.insert("", "end", values=(token, classification))
+
 # Function to update line numbers in the non-editable column
 def update_line_numbers():
     line_count = int(text_widget.index("end-1c").split('.')[0])  # Get the total number of lines
@@ -237,6 +243,5 @@ terminal_scrollbar = ttk.Scrollbar(frame, orient="vertical", command=terminal_wi
 terminal_scrollbar.grid(row=2, column=4, sticky="ns")
 terminal_widget.configure(yscrollcommand=terminal_scrollbar.set)
 
-# Attach scrollbar to both widgets
 
 root.mainloop()
