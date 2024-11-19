@@ -51,9 +51,9 @@ def syntax_analyzer(lexemes):
     initialize_stack = []
     loop_stack = []
     count = 0
-    for lexeme in lexemes:
+    for lexeme in lexemes: 
         # print(lexeme)
-        if lexeme[1] == "Identifier":
+        if lexeme[1] == "Identifier": #WILL BE CHANGED TO "LoopIdentifier" once specified
             # print(lexeme)
             if len(loop_stack) > 0 and (loop_stack[len(loop_stack)-1][1] == "Identifier"):
                 pass
@@ -99,7 +99,7 @@ def syntax_analyzer(lexemes):
                 
                 
 
-                elif keys == "loopdelimiter":
+                elif keys == "loopdelimiter": #HAS TO BE REVISED ONCE TOKENS ARE FIXED AND APPENDED IN SEQUENCE
                     if lexeme[0] == "IM IN YR":
                         loop_stack.append(lexeme[0])
                     elif lexeme[0] == "YR":
