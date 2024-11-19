@@ -6,12 +6,18 @@ import syntax_analyzer
 
 
 class Token:
-    def __init__(self, token, type, line):
-        self.token = token
-        self.type = type
-        self.line = line
-            
-# set of LOLcode keywords
+    def __init__(self, token, token_type, line, start=None, end=None):
+        self.token = token        # The token value (e.g., "HAI", "42", etc.)
+        self.type = token_type    # The type of the token (e.g., "Keyword", "Literal", etc.)
+        self.line = line          # The line number where the token was found
+        self.start = start        # The starting position of the token in the line
+        self.end = end            # The ending position of the token in the line
+
+    def __repr__(self):
+        return f"Token({self.token}, {self.type}, Line: {self.line}, Pos: {self.start}-{self.end})"
+
+
+# Set of LOLcode keywords
 constructs = set([
     "HAI", "KTHXBYE", "WAZZUP", "BUHBYE", "BTW", "OBTW", "TLDR", "I HAS A", "ITZ", "R",
     "SUM OF", "DIFF OF", "PRODUKT OF", "QUOSHUNT OF", "MOD OF", "BIGGR OF", "SMALLR OF",
@@ -21,144 +27,29 @@ constructs = set([
     "WILE", "IM OUTTA YR", "HOW IZ I", "IF U SAY SO", "GTFO", "FOUND YR", "I IZ", "MKAY", "AN"
 ])
 
-keyword_types = {
-    "HAI":"Code Delimiter", "KTHXBYE": "Code Delimiter", "WAZZUP": "Variable Declaration"
-}
+program_delimiters = {"HAI", "KTHXBYE"}
+control_flow = {"O RLY?", "YA RLY", "NO WAI", "WILE", "MEBBE", "IF U SAY SO", "GTFO"}
+data_declaration = {"I HAS A", "ITZ", "MAEK"}
+input_output = {"VISIBLE", "GIMMEH"}
+logical_operators = {"BOTH SAEM", "DIFFRINT", "NOT", "ANY OF", "ALL OF", "BOTH OF", "EITHER OF"}
+mathematical_operators = {"SUM OF", "DIFF OF", "PRODUKT OF", "QUOSHUNT OF", "MOD OF", "BIGGR OF", "SMALLR OF"}
+functions_and_blocks = {"BTW", "OBTW", "TLDR", "WTF?", "OMG", "OMGWTF"}
+other_keywords = {"WON OF", "IS NOW A", "FOUND YR", "IS", "R", "TIL", "UPPIN", "NERFIN", "YR", "IM OUTTA YR"}
 
-# regex patterns for literals
+# Regex patterns for literals
 literal_rules = [
-    r"\s-?[0-9]+\s",           # integer literals
-    r"\s-?[0-9]*\.?[0-9]+?\s", # floating-point literals
-    r'\s\".*\"',               # string literals
-    r"(WIN|FAIL)\s",           # boolean literals
-    r"\s(TROOF|NOOB|NUMBR|NUMBAR|YARN|TYPE)\s"  # type literals
+    r"\s-?[0-9]+\s",           # Integer literals
+    r"\s-?[0-9]*\.?[0-9]+?\s", # Floating-point literals
+    r'\s\".*\"',               # String literals
+    r"(WIN|FAIL)\s",           # Boolean literals
+    r"\s(TROOF|NOOB|NUMBR|NUMBAR|YARN|TYPE)\s"  # Type literals
 ]
 
-# regex pattern for identifiers
+# Regex pattern for identifiers
 identifier_rule = r"[a-zA-Z][a-zA-Z0-9_]*"
 code_line = []
-def get_file():
-    # open file dialog to select a LOLcode file
-    file_path = filedialog.askopenfilename(title="Open LOLcode file", filetypes=[("LOLcode files", "*.lol"), ("All files", "*.*")])
-    if not file_path:
-        return
-    
-    lexemes = {"keywords": [], "literals": [], "identifiers": []}
-    all_tokens = []  # store the tokens in the order they appear
-    
-    try:
-        with open(file_path, 'r') as lol_file:
-            line_cnt = 1
-            for line in lol_file:
-                code_line.append(line)
-                tokenize_line(line, lexemes, all_tokens, line_cnt)
-                line_cnt+=1
-        
-        # display the lexemes in the GUI
-        display_lexemes(lexemes, all_tokens)
-        update_line_numbers()
-        # print(lol_file)
-        append_terminal_output(f"\"{os.path.basename(file_path)}\" successfully read!")
-        syntax_analyzer.syntax_analyzer(all_tokens)
-        # print(all_tokens)
-        return all_tokens
-    except Exception as e:
-        messagebox.showerror("Error", f"An error occurred while reading the file:\n{e}")
-
-def tokenize_line(line, lexemes, all_tokens, line_cnt):
-    # track positions of found keywords and literals to exclude them from identifier checks
-    positions = {"keywords": [], "literals": [], "identifiers": []}
-    error_flag = 0 #0 means error has occurred and 1 means error has not occurred yet
-    # identify keywords (constructs) first
-    # We create a regular expression pattern to match any keyword in the constructs set
-    keywords = re.finditer(r"\b(?:{})\b".format("|".join(map(re.escape, constructs)).replace("?", r"\?")), line)
-    
-    # iterate over all the keyword matches found in the line
-    for keyword in keywords:
-        # add the matched keyword to the lexemes dictionary under 'keywords'
-        # print(keyword.group())
-        lexemes["keywords"].append(keyword.group().strip())
-        # add the keyword and its classification to the all_tokens list
-        all_tokens.append((keyword.group().strip(), "Keyword"))
-        # store the position of the keyword (start and end indices)
-        positions["keywords"].append(keyword.span())
-        # error_flag = 0
-
-    #does the same for literals
-    for rule in literal_rules: 
-        literals = re.finditer(rule, line)
-        for literal in literals:
-            if not is_within_positions(literal.span(), positions["keywords"]):
-                lexemes["literals"].append(literal.group().strip())
-                all_tokens.append((literal.group().strip(), "Literal"))
-                positions["literals"].append(literal.span())
-                # if error_flag == :
-                #     error_flag = 1
-
-    #does the same for identifiers
-    identifiers = re.finditer(identifier_rule, line)
-    for identifier in identifiers:
-        identifier_text = identifier.group().strip()
-        if (identifier_text not in constructs and
-            not is_within_positions(identifier.span(), positions["keywords"]) and
-            not is_within_positions(identifier.span(), positions["literals"])):
-
-            lexemes["identifiers"].append(identifier_text)
-            all_tokens.append((identifier_text, "Identifier"))
-            positions["identifiers"].append(identifier.span())
-            # print(identifier_text)
-
-    remaining_text = re.finditer(r"\S+", line)  # Find non-whitespace sequences in the line
-    for text in remaining_text:
-        if not (is_within_positions(text.span(), positions["keywords"]) or
-                is_within_positions(text.span(), positions["literals"]) or
-                is_within_positions(text.span(), positions["identifiers"])):
-            # Add to lexemes as an error (for display purposes, if needed)
-            lexemes.setdefault("errors", []).append(text.group().strip())
-            # Add the error and classification to all_tokens
-            all_tokens.append((text.group().strip(), "Error"))
-            if len(lexemes["errors"]) > 0:
-                # print(lexemes["errors"])
-                print(f"ERROR: Illegal character found in line {line_cnt}: {lexemes["errors"][0]}")
-    
-    
 
 
-def is_within_positions(span, positions):
-    for start, end in positions:
-        if start <= span[0] < end or start < span[1] <= end:
-            return True
-    return False
-
-def display_lexemes(lexemes, all_tokens):
-    text_widget.delete("1.0", tk.END)
-    for item in tree2.get_children():
-        tree2.delete(item)
-
-    # display lexemes in the text widget
-    max_len = max(len(lexemes["keywords"]), len(lexemes["literals"]), len(lexemes["identifiers"]))
-    for i in range(len(code_line)):
-
-        line_text = f"{code_line[i].strip()}\n"
-        text_widget.insert(tk.END, line_text)
-    
-    # insert tokens in order into the second Treeview (token - classification)
-    for token, classification in all_tokens:
-        tree2.insert("", "end", values=(token, classification))
-
-# Function to update line numbers in the non-editable column
-def update_line_numbers():
-    line_count = int(text_widget.index("end-1c").split('.')[0])  # Get the total number of lines
-    line_numbers_widget.configure(state="normal")
-    line_numbers_widget.delete("1.0", tk.END)  # Clear the previous line numbers
-
-    # Insert line numbers
-    for i in range(line_count):
-        line_numbers_widget.insert(f"{i + 1}.0", f"{i + 1}\n", "center")
-    line_numbers_widget.configure(state="disabled")  # Make it non-editable
-    
-
-# Function to handle text modifications and update line numbers
 def on_text_change(event=None):
     update_line_numbers()
     line_numbers_widget.yview_moveto(text_widget.yview()[0])
@@ -176,7 +67,175 @@ def on_scroll(*args):
 def on_text_scroll(*args):
     line_numbers_widget.yview_moveto(text_widget.yview()[0])
 
-# GUI setup
+def update_line_numbers():
+    line_count = int(text_widget.index("end-1c").split('.')[0])  # Get the total number of lines
+    line_numbers_widget.configure(state="normal")
+    line_numbers_widget.delete("1.0", tk.END)  # Clear the previous line numbers
+
+    # Insert line numbers
+    for i in range(line_count):
+        line_numbers_widget.insert(f"{i + 1}.0", f"{i + 1}\n", "center")
+    line_numbers_widget.configure(state="disabled")  # Make it non-editable
+
+def get_file():
+    # Open file dialog to select a LOLcode file
+    file_path = filedialog.askopenfilename(title="Open LOLcode file", filetypes=[("LOLcode files", "*.lol"), ("All files", "*.*")])
+    if not file_path:
+        return
+    
+    lexemes = {"keywords": [], "literals": [], "identifiers": []}
+    all_tokens = []  # Store the tokens in the order they appear
+    
+    try:
+        with open(file_path, 'r') as lol_file:
+            line_cnt = 1
+            for line in lol_file:
+                code_line.append(line)
+                tokenize_line(line, lexemes, all_tokens, line_cnt)
+                line_cnt += 1
+        
+        # Display the lexemes in the GUI
+        display_lexemes(lexemes, all_tokens)
+        update_line_numbers()
+        append_terminal_output(f"\"{os.path.basename(file_path)}\" successfully read!")
+        syntax_analyzer.syntax_analyzer(all_tokens)  # Pass tokens to the syntax analyzer
+    except Exception as e:
+        messagebox.showerror("Error", f"An error occurred while reading the file:\n{e}")
+
+def tokenize_line(line, lexemes, all_tokens, line_cnt):
+    # Track positions of found keywords and literals to exclude them from identifier checks
+    positions = {"keywords": [], "literals": [], "identifiers": []}
+
+    # Define patterns for detecting variable, function, and loop identifiers
+    variable_keywords = ["I HAS A", "I HAS", "GIMMEH", "MAEK", "YR","VISIBLE"]
+    function_keywords = ["HOW IZ I"]
+    loop_keywords = ["IM IN YR", "IM OUTTA YR"]
+
+    # Identify keywords
+    keywords = re.finditer(r"\b(?:{})\b".format("|".join(map(re.escape, constructs)).replace("?", r"\?")), line)
+    for keyword in keywords:
+        lexeme = keyword.group().strip()
+
+        # Classify the keyword into a specific category
+        if lexeme in program_delimiters:
+            token_type = "Program Delimiter"
+        elif lexeme in control_flow:
+            token_type = "Control Flow"
+        elif lexeme in data_declaration:
+            token_type = "Data Declaration"
+        elif lexeme in input_output:
+            token_type = "Input/Output"
+        elif lexeme in logical_operators:
+            token_type = "Logical Operator"
+        elif lexeme in mathematical_operators:
+            token_type = "Mathematical Operator"
+        elif lexeme in functions_and_blocks:
+            token_type = "Functions and Blocks"
+        else:
+            token_type = "Other Keyword"
+
+        lexemes["keywords"].append(lexeme)
+        all_tokens.append({
+            "token": lexeme,
+            "type": token_type,
+            "line": line_cnt,
+            "start": keyword.start(),
+            "end": keyword.end()
+        })
+        positions["keywords"].append(keyword.span())
+
+    # Identify literals
+    for rule in literal_rules:
+        literals = re.finditer(rule, line)
+        for literal in literals:
+            if not is_within_positions(literal.span(), positions["keywords"]):
+                lexeme = literal.group().strip()
+                lexemes["literals"].append(lexeme)
+                all_tokens.append({
+                    "token": lexeme,
+                    "type": "Literal",
+                    "line": line_cnt,
+                    "start": literal.start(),
+                    "end": literal.end()
+                })
+                positions["literals"].append(literal.span())
+
+    # Identify identifiers
+    identifiers = re.finditer(identifier_rule, line)
+    for identifier in identifiers:
+        identifier_text = identifier.group().strip()
+        if (identifier_text not in constructs and
+                not is_within_positions(identifier.span(), positions["keywords"]) and
+                not is_within_positions(identifier.span(), positions["literals"])):
+
+            # Heuristic-based classification of the identifier
+            identifier_type = "Identifier"  # Default classification
+
+            # Check if the identifier is part of a variable declaration (e.g., "I HAS A")
+            for keyword in variable_keywords:
+                if keyword in line[:identifier.start()]:  # Check if keyword precedes the identifier
+                    identifier_type = "Variable"
+                    break
+
+            # Check if the identifier is part of a function (e.g., "HOW IZ I")
+            for keyword in function_keywords:
+                if keyword in line[:identifier.start()]:  # Check if keyword precedes the identifier
+                    identifier_type = "Function"
+                    break
+
+            # Check if the identifier is part of a loop (e.g., "IM IN YR")
+            for keyword in loop_keywords:
+                if keyword in line[:identifier.start()]:  # Check if keyword precedes the identifier
+                    identifier_type = "Loop"
+                    break
+
+            lexemes["identifiers"].append(identifier_text)
+            all_tokens.append({
+                "token": identifier_text,
+                "type": identifier_type,
+                "line": line_cnt,
+                "start": identifier.start(),
+                "end": identifier.end()
+            })
+            positions["identifiers"].append(identifier.span())
+
+    # Identify errors (unclassified tokens)
+    remaining_text = re.finditer(r"\S+", line)
+    for text in remaining_text:
+        if not (is_within_positions(text.span(), positions["keywords"]) or
+                is_within_positions(text.span(), positions["literals"]) or
+                is_within_positions(text.span(), positions["identifiers"])):  # Unclassified token
+            lexeme = text.group().strip()
+            lexemes.setdefault("errors", []).append(lexeme)
+            all_tokens.append({
+                "token": lexeme,
+                "type": "Error",
+                "line": line_cnt,
+                "start": text.start(),
+                "end": text.end()
+            })
+
+
+def is_within_positions(span, positions):
+    for start, end in positions:
+        if start <= span[0] < end or start < span[1] <= end:
+            return True
+    return False
+
+def display_lexemes(lexemes, all_tokens):
+    text_widget.delete("1.0", tk.END)
+    for item in tree2.get_children():
+        tree2.delete(item)
+
+    # Display code lines in the text widget
+    for i in range(len(code_line)):
+        line_text = f"{code_line[i].strip()}\n"
+        text_widget.insert(tk.END, line_text)
+
+    # Insert tokens into the Treeview (Token - Classification - Line)
+    for token in all_tokens:
+        tree2.insert("", "end", values=(token["token"], token["type"], token["line"]))
+
 root = tk.Tk()
 root.title("LOLcode Lexical Analyzer")
 root.geometry("1500x700")
