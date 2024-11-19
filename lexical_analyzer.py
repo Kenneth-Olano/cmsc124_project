@@ -63,11 +63,12 @@ def tokenize_line(line, lexemes, all_tokens, line_cnt):
     error_flag = 0 #0 means error has occurred and 1 means error has not occurred yet
     # identify keywords (constructs) first
     # We create a regular expression pattern to match any keyword in the constructs set
-    keywords = re.finditer(r"\b(?:{})\b".format("|".join(map(re.escape, constructs))), line)
-    # print(keywords)
+    keywords = re.finditer(r"\b(?:{})\b".format("|".join(map(re.escape, constructs)).replace("?", r"\?")), line)
+    
     # iterate over all the keyword matches found in the line
     for keyword in keywords:
         # add the matched keyword to the lexemes dictionary under 'keywords'
+        # print(keyword.group())
         lexemes["keywords"].append(keyword.group().strip())
         # add the keyword and its classification to the all_tokens list
         all_tokens.append((keyword.group().strip(), "Keyword"))
@@ -109,7 +110,7 @@ def tokenize_line(line, lexemes, all_tokens, line_cnt):
             # Add the error and classification to all_tokens
             all_tokens.append((text.group().strip(), "Error"))
             if len(lexemes["errors"]) > 0:
-                print(lexemes["errors"])
+                # print(lexemes["errors"])
                 print(f"ERROR: Illegal character found in line {line_cnt}: {lexemes["errors"][0]}")
     
     

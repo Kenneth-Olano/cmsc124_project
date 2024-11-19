@@ -1,3 +1,5 @@
+from tkinter import messagebox
+
 def syntax_analyzer(lexemes):
     constructs = {
         "programdelimiter":("HAI", "KTHXBYE"),
@@ -46,46 +48,64 @@ def syntax_analyzer(lexemes):
     program_stack = []
     func_stack = []
     ifelse_stack = []
-
+    # count = 0
     for lexeme in lexemes:
-        for keys in constructs:
+        # print(lexeme)
+        for keys in constructs.keys():
             if lexeme[0] in constructs[keys]:
                 if keys == "programdelimiter":
+                    # print("delimiter")
                     if lexeme[0] == "HAI":
                         program_stack.append(lexeme[0])
                     elif lexeme[0] == "KTHXBYE":
-                        program_stack.pop()
+                        try:
+                            program_stack.pop()
+                        except:    
+                            messagebox.showerror("Error", f"Invalid program delimiters")
+                            print("Invalid program delimiters")
+                            return
 
 
-                if keys == "funcdelimiter":
+
+
+                elif keys == "funcdelimiter":
+                    # print("function")
                     if lexeme[0] == "IM IN YR":
                         func_stack.append(lexeme[0])
                     elif lexeme[0] == "IM OUTTA YR":
-                        func_stack.pop()
-                
-                if keys == "ifelse":
-                    if lexeme[0] == "O RLY?":
+                        try:
+                            func_stack.pop()
+                        except:    
+                            messagebox.showerror("Error", f"Invalid function delimiters")
+                            print("Invalid function delimiters")
+                            return
+
+                elif keys == "ifelse":
+                    # print("ifelse")
+                    if lexeme[0] == "O RLY":
                         ifelse_stack.append(lexeme[0])
                     if lexeme[0] == "OIC":
-                        ifelse_stack.pop()
-                print(program_stack)
-                print(func_stack)
-                print(ifelse_stack)
-    
-    if(len(func_stack) == 0):
+                        try:
+                            ifelse_stack.pop()
+                        except:
+                            messagebox.showerror("Error", f"Invalid if-else delimiters")
+                            print("Invalid if-else delimiters")
+                            return
+
+    if(len(program_stack) == 0):
         print("> VALID PROGRAM DELIMITERS")
     else:
-        raise SyntaxError("Invalid program delimiters")
+        print("Invalid program delimiters")
 
     if(len(ifelse_stack) == 0):
         print("> VALID IF ELSE")
     else:
-        raise SyntaxError("Invalid if else delimiters")
+        print("Invalid if else delimiters")
     
     if(len(func_stack) == 0):
         print("> VALID IF ELSE")
     else:
-        raise SyntaxError("Invalid function delimiters")
+        print("Invalid function delimiters")
 
 
 
