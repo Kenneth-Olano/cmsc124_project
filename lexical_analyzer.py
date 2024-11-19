@@ -4,6 +4,13 @@ import tkinter as tk
 from tkinter import filedialog, messagebox, ttk
 import syntax_analyzer
 
+
+class Token:
+    def __init__(self, token, type, line):
+        self.token = token
+        self.type = type
+        self.line = line
+            
 # set of LOLcode keywords
 constructs = set([
     "HAI", "KTHXBYE", "WAZZUP", "BUHBYE", "BTW", "OBTW", "TLDR", "I HAS A", "ITZ", "R",
@@ -53,6 +60,7 @@ def get_file():
         # print(lol_file)
         append_terminal_output(f"\"{os.path.basename(file_path)}\" successfully read!")
         syntax_analyzer.syntax_analyzer(all_tokens)
+        # print(all_tokens)
         return all_tokens
     except Exception as e:
         messagebox.showerror("Error", f"An error occurred while reading the file:\n{e}")
