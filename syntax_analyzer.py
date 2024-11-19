@@ -127,16 +127,25 @@ def syntax_analyzer(lexemes):
                         loop_stack.append(lexeme[0])
                     
 
+                # Function delimiter
                 elif keys == "funcdelimiter":
                     # print("function")
-                    if lexeme[0] == "IM IN YR":
+                    # Function declaration
+                    if lexeme[0] == "HOW IZ I":
+                        if func_stack and func_stack[-1] == lexeme[0]:
+                            messagebox.showerror("SyntaxError", f"Nested function declarations are not allowed")
+                            print("Error: Nested function declaration")
+                            return
+                        
+                        # Push 'HOW IZ I' to the stack
                         func_stack.append(lexeme[0])
-                    elif lexeme[0] == "IM OUTTA YR":
-                        try:
+                    elif lexeme[0] == "IF U SAY SO":
+                        # Checks if the latest function declaration has a matching 'IF U SAY SO'
+                        if func_stack and func_stack[-1] == lexeme[0]:
                             func_stack.pop()
-                        except:    
-                            messagebox.showerror("SyntaxError", f"Invalid function delimiters")
-                            print("Invalid function delimiters")
+                        else:    
+                            messagebox.showerror("SyntaxError", f"'IF U SAY SO' has no matching 'HOW IZ I'")
+                            print("Error: Unmatched 'IF U SAY SO'")
                             return
 
                 elif keys == "ifelse":
