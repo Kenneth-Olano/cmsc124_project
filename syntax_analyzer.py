@@ -18,7 +18,7 @@ def syntax_analyzer(lexemes):
         "funcparam": ('YR', 'AN'),
         "switch": ("WTF?", "OMGWTF", "OIC"),
         "case": ("OMG", "GTFO"),
-        "ifelse": ("O RLY?", "YA RLY", "NO WAI", "OIC"),
+        "ifelse": ("O RLY", "YA RLY", "NO WAI", "OIC"),
         "return": ('FOUND YR', 'GTFO'),
         "concat": ("SMOOSH"),
         "input": ("GIMMEH"),
@@ -65,6 +65,7 @@ def syntax_analyzer(lexemes):
                             print("Invalid program delimiters")
                             return
 
+            
 
 
 
@@ -76,7 +77,7 @@ def syntax_analyzer(lexemes):
                         try:
                             func_stack.pop()
                         except:    
-                            messagebox.showerror("Error", f"Invalid function delimiters")
+                            messagebox.showerror("SyntaxError", f"Invalid function delimiters")
                             print("Invalid function delimiters")
                             return
 
@@ -84,13 +85,29 @@ def syntax_analyzer(lexemes):
                     # print("ifelse")
                     if lexeme[0] == "O RLY":
                         ifelse_stack.append(lexeme[0])
-                    if lexeme[0] == "OIC":
+                    elif lexeme[0] == "YA RLY": #if YA RLY is encountered
+                        if "O RLY" not in ifelse_stack: #check if it is enclosed in an O RLY clause
+                            messagebox.showerror("SyntaxError", f"YA RLY imposed with imposing O RLY first.")
+                        else: #push to stack
+                            ifelse_stack.append(lexeme[0])
+                    elif lexeme[0] == "NO WAI": #when NO WAI is encoutered
+                        error_string = ""
+                        if "O RLY" not in ifelse_stack: #check if it is enclosed by an O RLY clause
+                            error_string+= "YA RLY imposed with imposing O RLY first.\n"
+                        if "YA RLY" not in ifelse_stack: #also check if NO WAI is preceeded by a YA RLY clase
+                            error_string += "NO WAI imposed with imposing YA RLY first."
+                        if len(error_string) != 0:
+                            messagebox.showerror("SyntaxError", error_string)
+                    elif lexeme[0] == "OIC": #if OIC is encountered
                         try:
-                            ifelse_stack.pop()
+                            if ifelse_stack[len(ifelse_stack)-1] == "YA RLY": #the top of stack should always be YA RLY when OIC is encountered, pop 2x if so
+                                ifelse_stack.pop()
+                                ifelse_stack.pop()
                         except:
-                            messagebox.showerror("Error", f"Invalid if-else delimiters")
-                            print("Invalid if-else delimiters")
+                            messagebox.showerror("SyntaxError", f"Invalid if-else delimiters")
+                            print("OIC Invalid if-else delimiters")
                             return
+                    print(ifelse_stack)
 
     if(len(program_stack) == 0):
         print("> VALID PROGRAM DELIMITERS")
