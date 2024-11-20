@@ -95,9 +95,12 @@ def get_file():
                 line_cnt += 1
         
         # Display the lexemes in the GUI
+        all_tokens = sorted(sorted(all_tokens, key=lambda x: x['end']),  key=lambda y: y['line'])
+        # print(all_tokens)
         display_lexemes(lexemes, all_tokens)
         update_line_numbers()
         append_terminal_output(f"\"{os.path.basename(file_path)}\" successfully read!")
+        
         syntax_analyzer.syntax_analyzer(all_tokens)  # Pass tokens to the syntax analyzer
     except Exception as e:
         messagebox.showerror("Error", f"An error occurred while reading the file:\n{e}")
