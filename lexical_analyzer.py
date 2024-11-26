@@ -2,7 +2,9 @@ import os
 import re
 import tkinter as tk
 from tkinter import filedialog, messagebox, ttk
-import syntax_analyzer
+import sys
+sys.path.append('C:/ACADEMICS/university of the philippines/CMSC124/project')
+from syntax_analyzer import SyntaxAnalyzer
 
 
 class Token:
@@ -28,18 +30,23 @@ constructs = set([
 ])
 
 program_delimiters = {"HAI", "KTHXBYE"}
-control_flow = {"O RLY?", "YA RLY", "NO WAI", "WILE", "MEBBE", "IF U SAY SO", "GTFO"}
+control_flow = {"O RLY?", "YA RLY", "NO WAI", "MEBBE", "IF U SAY SO", "GTFO"}
+data_initialization = {"WAZZUP", "BUHBYE"}
 data_declaration = {"I HAS A", "ITZ", "MAEK"}
 input_output = {"VISIBLE", "GIMMEH"}
+connector = {"AN", "YR"}
+loop_type = {"TIL", "WILE"}
 logical_operators = {"BOTH SAEM", "DIFFRINT", "NOT", "ANY OF", "ALL OF", "BOTH OF", "EITHER OF"}
 mathematical_operators = {"SUM OF", "DIFF OF", "PRODUKT OF", "QUOSHUNT OF", "MOD OF", "BIGGR OF", "SMALLR OF"}
 functions_and_blocks = {"BTW", "OBTW", "TLDR", "WTF?", "OMG", "OMGWTF"}
-other_keywords = {"WON OF", "IS NOW A", "FOUND YR", "IS", "R", "TIL", "UPPIN", "NERFIN", "YR", "IM OUTTA YR"}
+assignment = {"R"}
+loop_op = {"UPPIN", "NERFIN"}
+other_keywords = {"WON OF", "IS NOW A", "FOUND YR", "IS"}
 
 # Regex patterns for literals
 literal_rules = [
     r"\s-?[0-9]+\s",           # Integer literals
-    r"\s-?[0-9]*\.?[0-9]+?\s", # Floating-point literals
+    r"\s-?[0-9]*\.[0-9]+?\s", # Floating-point literals
     r'\s\".*\"',               # String literals
     r"(WIN|FAIL)\s",           # Boolean literals
     r"\s(TROOF|NOOB|NUMBR|NUMBAR|YARN|TYPE)\s"  # Type literals
@@ -100,15 +107,16 @@ def get_file():
         display_lexemes(lexemes, all_tokens)
         update_line_numbers()
         append_terminal_output(f"\"{os.path.basename(file_path)}\" successfully read!")
-        
-        syntax_analyzer.syntax_analyzer(all_tokens)  # Pass tokens to the syntax analyzer
+        a=SyntaxAnalyzer(all_tokens)
+        a.parse_program()
+        # syntax_analyzer.syntax_analyzer(all_tokens)  # Pass tokens to the syntax analyzer
     except Exception as e:
         messagebox.showerror("Error", f"An error occurred while reading the file:\n{e}")
 
 def tokenize_line(line, lexemes, all_tokens, line_cnt):
     # Track positions of found keywords and literals to exclude them from identifier checks
     positions = {"keywords": [], "literals": [], "identifiers": []}
-
+    literaltype_arr = ["NUMBR", "NUMBAR", "YARN", "TROOF"]
     # Define patterns for detecting variable, function, and loop identifiers
     variable_keywords = ["I HAS A", "I HAS", "GIMMEH", "MAEK", "YR","VISIBLE"]
     function_keywords = ["HOW IZ I"]
@@ -117,10 +125,12 @@ def tokenize_line(line, lexemes, all_tokens, line_cnt):
     # Identify keywords
     keywords = re.finditer(r"\b(?:{})\b".format("|".join(map(re.escape, constructs)).replace("?", r"\?")), line)
     for keyword in keywords:
+        
         lexeme = keyword.group().strip()
 
         # Classify the keyword into a specific category
         if lexeme in program_delimiters:
+            
             token_type = "Program Delimiter"
         elif lexeme in control_flow:
             token_type = "Control Flow"
@@ -134,6 +144,18 @@ def tokenize_line(line, lexemes, all_tokens, line_cnt):
             token_type = "Mathematical Operator"
         elif lexeme in functions_and_blocks:
             token_type = "Functions and Blocks"
+        elif lexeme in data_initialization:
+            token_type = "Data Initialization"
+        elif lexeme in connector:
+            token_type = "Connector"
+        elif lexeme in loop_keywords:
+            token_type = "Loop Delimiter"
+        elif lexeme in assignment:
+            token_type = "Assignment Operator"
+        elif lexeme in loop_op:
+            token_type = "Loop Operator"
+        elif lexeme in loop_type:
+            token_type = "Loop Type"
         else:
             token_type = "Other Keyword"
 
@@ -148,21 +170,32 @@ def tokenize_line(line, lexemes, all_tokens, line_cnt):
         positions["keywords"].append(keyword.span())
 
     # Identify literals
+    literalrule_index = 0
     for rule in literal_rules:
         literals = re.finditer(rule, line)
         for literal in literals:
-            if not is_within_positions(literal.span(), positions["keywords"]):
+            if not is_within_positions(literal.span(), positions["keywords"]) :
                 lexeme = literal.group().strip()
                 lexemes["literals"].append(lexeme)
-                all_tokens.append({
-                    "token": lexeme,
-                    "type": "Literal",
-                    "line": line_cnt,
-                    "start": literal.start(),
-                    "end": literal.end()
-                })
+                if literalrule_index in range(0, 4):
+                    all_tokens.append({
+                        "token": lexeme,
+                        "type": literaltype_arr[literalrule_index],
+                        "line": line_cnt,
+                        "start": literal.start(),
+                        "end": literal.end()
+                    })
+                else:
+                    all_tokens.append({
+                        "token": lexeme,
+                        "type": "Literal",
+                        "line": line_cnt,
+                        "start": literal.start(),
+                        "end": literal.end()
+                    })
                 positions["literals"].append(literal.span())
-
+        literalrule_index+=1
+    # print(lexemes['literals'])
     # Identify identifiers
     identifiers = re.finditer(identifier_rule, line)
     for identifier in identifiers:
@@ -172,13 +205,16 @@ def tokenize_line(line, lexemes, all_tokens, line_cnt):
                 not is_within_positions(identifier.span(), positions["literals"])):
 
             # Heuristic-based classification of the identifier
-            identifier_type = "Identifier"  # Default classification
+            identifier_type = "Variable"  # Default classification
 
             # Check if the identifier is part of a variable declaration (e.g., "I HAS A")
-            for keyword in variable_keywords:
-                if keyword in line[:identifier.start()]:  # Check if keyword precedes the identifier
-                    identifier_type = "Variable"
-                    break
+            # for keyword in variable_keywords:
+            #     if keyword in line[:identifier.start()]:  # Check if keyword precedes the identifier
+            #         identifier_type = "Variable"
+            #         break
+            #     elif len(line) == 0:
+            #         identifier_type = "Variable"
+            #         break
 
             # Check if the identifier is part of a function (e.g., "HOW IZ I")
             for keyword in function_keywords:
@@ -188,7 +224,7 @@ def tokenize_line(line, lexemes, all_tokens, line_cnt):
 
             # Check if the identifier is part of a loop (e.g., "IM IN YR")
             for keyword in loop_keywords:
-                if keyword in line[:identifier.start()]:  # Check if keyword precedes the identifier
+                if keyword in line[:identifier.start()] and len(positions["identifiers"])==0:  # Check if keyword precedes the identifier
                     identifier_type = "Loop"
                     break
 
