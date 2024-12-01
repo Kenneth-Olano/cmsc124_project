@@ -30,7 +30,7 @@ constructs = set([
 ])
 
 program_delimiters = {"HAI", "KTHXBYE"}
-control_flow = {"O RLY?", "YA RLY", "NO WAI", "MEBBE", "IF U SAY SO", "GTFO"}
+control_flow = {"O RLY?", "YA RLY", "NO WAI", "MEBBE", "IF U SAY SO"}
 data_initialization = {"WAZZUP", "BUHBYE"}
 data_declaration = {"I HAS A", "ITZ", "MAEK"}
 input_output = {"VISIBLE", "GIMMEH"}
@@ -39,9 +39,10 @@ loop_type = {"TIL", "WILE"}
 logical_operators = {"BOTH SAEM", "DIFFRINT", "NOT", "ANY OF", "ALL OF", "BOTH OF", "EITHER OF"}
 mathematical_operators = {"SUM OF", "DIFF OF", "PRODUKT OF", "QUOSHUNT OF", "MOD OF", "BIGGR OF", "SMALLR OF"}
 functions_and_blocks = {"BTW", "OBTW", "TLDR", "WTF?", "OMG", "OMGWTF"}
+return_statements = {"FOUND YR", "GTFO"}
 assignment = {"R"}
 loop_op = {"UPPIN", "NERFIN"}
-other_keywords = {"WON OF", "IS NOW A", "FOUND YR", "IS"}
+other_keywords = {"WON OF", "IS NOW A", "IS"}
 
 # Regex patterns for literals
 literal_rules = [
@@ -119,7 +120,7 @@ def tokenize_line(line, lexemes, all_tokens, line_cnt):
     literaltype_arr = ["NUMBR", "NUMBAR", "YARN", "TROOF"]
     # Define patterns for detecting variable, function, and loop identifiers
     variable_keywords = ["I HAS A", "I HAS", "GIMMEH", "MAEK", "YR","VISIBLE"]
-    function_keywords = ["HOW IZ I"]
+    function_keywords = ["HOW IZ I", "IF U SAY SO"]
     loop_keywords = ["IM IN YR", "IM OUTTA YR"]
 
     # Identify keywords
@@ -144,6 +145,10 @@ def tokenize_line(line, lexemes, all_tokens, line_cnt):
             token_type = "Mathematical Operator"
         elif lexeme in functions_and_blocks:
             token_type = "Functions and Blocks"
+        elif lexeme in function_keywords:
+            token_type = "Function Delimiter"
+        elif lexeme in return_statements:
+            token_type = "Return Statement"
         elif lexeme in data_initialization:
             token_type = "Data Initialization"
         elif lexeme in connector:
