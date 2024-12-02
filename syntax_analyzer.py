@@ -308,6 +308,8 @@ class SyntaxAnalyzer:
             self.parse_variable_assignment()
         elif token_type == "Loop Delimiter":
             self.parse_loop()
+        elif token_type == "Function Delimiter":
+            self.parse_function()
         else:
             self.raise_error("a valid statement")
 
@@ -332,6 +334,8 @@ class SyntaxAnalyzer:
         if self.current_token and self.current_token["type"] == "Variable":
             self.advance()
         elif self.current_token and self.current_token["type"] == "Loop":
+            self.advance()
+        elif self.current_token and self.current_token["type"] == "Function":
             self.advance()
         else:
             self.raise_error("Identifier")
@@ -384,6 +388,35 @@ class SyntaxAnalyzer:
         else:
             self.raise_error("'MKAY' after function call")
 
+    def parse_function(self):
+        """Parse function constructs."""
+        self.match("Function Delimiter", "HOW IZ I")
+
+        # Checks if there is function identifier
+        if self.current_token["type"] != "Function":
+            self.raise_error("Function identifier after 'HOW IZ I'")
+        self.advance()
+
+        # Parse parameters if there are any
+        while self.current_token and self.current_token["token"] == ["YR", "AN"]:
+            self.match("Function Parameter", "YR")
+            self.parse_identifier()
+        
+        # Ensure there are no function declarations inside and handle the statements
+        return_found = False
+        while self.current_token and self.current_token["token"] != "IF U SAY SO":
+            if self.current_token["token"] == "HOW IZ I":
+                self.raise_error("Nested function declaration found in the function body")
+            if self.current_token["token"] in ["FOUND YR", "GTFO"]:
+                self.match("Return Statement", self.current_token["token"])
+                return_found = True
+            else:
+                self.parse_statement()
+        
+        if not return_found:
+            self.raise_error("Missing return statement ('FOUND YR' or 'GTFO') inside the function")
+        self.match("Function Delimiter", "IF U SAY SO")
+        
     def parse_loopop(self):
         try:
             self.match("Loop Operator")
