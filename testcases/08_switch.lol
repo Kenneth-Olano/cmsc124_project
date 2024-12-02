@@ -4,7 +4,6 @@ HAI
 		I HAS A input
 	BUHBYE
 	
-	BTW if w/o MEBBE, 1 only, everything else is invalid
 	VISIBLE "1. Compute age"
 	VISIBLE "2. Compute tip"
 	VISIBLE "3. Compute square area"
@@ -23,15 +22,16 @@ HAI
 		OMG 2
 			VISIBLE "Enter bill cost: "
 			GIMMEH input
-			VISIBLE "Tip: " PRODUCKT OF input AN 0.1
+			VISIBLE "Tip: " + PRODUKT OF input AN 0.1
 			GTFO
 		OMG 3
 			VISIBLE "Enter width: "
 			GIMMEH input
-			VISIBLE "Square Area: " PRODUCKT OF input AN input
+			VISIBLE "Square Area: " + PRODUKT OF input AN input
 			GTFO
 		OMG 0
 			VISIBLE "Goodbye"
+			GTFO
 		OMGWTF
 			VISIBLE "Invalid Input!"
 	OIC

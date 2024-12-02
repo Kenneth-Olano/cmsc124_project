@@ -1,11 +1,10 @@
 HAI
     WAZZUP
-        BTW variable dec
         I HAS A x
         I HAS A y
     BUHBYE
 
-    VISIBLE "x:" WIN ", y:" WIN
+    VISIBLE "x:" + WIN + ", y:" + WIN
     x R WIN
     y R WIN
 
@@ -18,7 +17,7 @@ HAI
     VISIBLE ANY OF BOTH OF x AN EITHER OF NOT x AN y AN y AN NOT y MKAY
     VISIBLE BOTH OF x AN EITHER OF NOT x AN y
 
-    VISIBLE "x:" FAIL ", y:" WIN
+    VISIBLE "x:" + FAIL + ", y:" + WIN
     x R FAIL
 
     VISIBLE BOTH OF x AN y
@@ -30,7 +29,7 @@ HAI
     VISIBLE ANY OF BOTH OF x AN EITHER OF NOT x AN y AN y AN NOT y MKAY
     VISIBLE BOTH OF x AN EITHER OF NOT x AN y
 
-    VISIBLE "x:" FAIL ", y:" FAIL
+    VISIBLE "x:" + FAIL  + ", y:" + FAIL
     y R FAIL
 
     VISIBLE BOTH OF x AN y

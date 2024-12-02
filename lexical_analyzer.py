@@ -30,19 +30,25 @@ constructs = set([
 ])
 
 program_delimiters = {"HAI", "KTHXBYE"}
-control_flow = {"O RLY?", "YA RLY", "NO WAI", "MEBBE", "IF U SAY SO"}
+control_flow = {"O RLY?", "YA RLY", "NO WAI", "MEBBE", "OIC"}
 data_initialization = {"WAZZUP", "BUHBYE"}
-data_declaration = {"I HAS A", "ITZ", "MAEK"}
+data_declaration = {"I HAS A", "ITZ"}
 input_output = {"VISIBLE", "GIMMEH"}
 connector = {"AN", "YR"}
 loop_type = {"TIL", "WILE"}
 logical_operators = {"BOTH SAEM", "DIFFRINT", "NOT", "ANY OF", "ALL OF", "BOTH OF", "EITHER OF"}
 mathematical_operators = {"SUM OF", "DIFF OF", "PRODUKT OF", "QUOSHUNT OF", "MOD OF", "BIGGR OF", "SMALLR OF"}
-functions_and_blocks = {"BTW", "OBTW", "TLDR", "WTF?", "OMG", "OMGWTF"}
+switch = {"WTF?", "OMG", "OMGWTF"}
 return_statements = {"FOUND YR", "GTFO"}
+function_call = {"I IZ", "MKAY"}
 assignment = {"R"}
 loop_op = {"UPPIN", "NERFIN"}
-other_keywords = {"WON OF", "IS NOW A", "IS"}
+typecast = {"IS NOW A", "MAEK"}
+other_keywords = {"WON OF","IS"}
+function_keywords = {"HOW IZ I", "IF U SAY SO"}
+loop_keywords = {"IM IN YR", "IM OUTTA YR"}
+concatenate = {"SMOOSH", "+"}
+comments = {"BTW", "OBTW", "TLDR"}
 
 # Regex patterns for literals
 literal_rules = [
@@ -120,18 +126,21 @@ def tokenize_line(line, lexemes, all_tokens, line_cnt):
     literaltype_arr = ["NUMBR", "NUMBAR", "YARN", "TROOF"]
     # Define patterns for detecting variable, function, and loop identifiers
     variable_keywords = ["I HAS A", "I HAS", "GIMMEH", "MAEK", "YR","VISIBLE"]
-    function_keywords = ["HOW IZ I", "IF U SAY SO"]
-    loop_keywords = ["IM IN YR", "IM OUTTA YR"]
+    
 
     # Identify keywords
     keywords = re.finditer(r"\b(?:{})\b".format("|".join(map(re.escape, constructs)).replace("?", r"\?")), line)
+    
     for keyword in keywords:
-        
         lexeme = keyword.group().strip()
-
+        if lexeme == "O RLY":
+            lexeme = "O RLY?"
+        elif lexeme == "WTF":
+            lexeme = "WTF?"
+        
+            
         # Classify the keyword into a specific category
         if lexeme in program_delimiters:
-            
             token_type = "Program Delimiter"
         elif lexeme in control_flow:
             token_type = "Control Flow"
@@ -143,8 +152,8 @@ def tokenize_line(line, lexemes, all_tokens, line_cnt):
             token_type = "Logical Operator"
         elif lexeme in mathematical_operators:
             token_type = "Mathematical Operator"
-        elif lexeme in functions_and_blocks:
-            token_type = "Functions and Blocks"
+        elif lexeme in switch:
+            token_type = "Switch"
         elif lexeme in function_keywords:
             token_type = "Function Delimiter"
         elif lexeme in return_statements:
@@ -161,7 +170,16 @@ def tokenize_line(line, lexemes, all_tokens, line_cnt):
             token_type = "Loop Operator"
         elif lexeme in loop_type:
             token_type = "Loop Type"
+        elif lexeme in concatenate:
+            token_type = "Concatenate"
+        elif lexeme in function_call:
+            token_type = "Function Call"
+        elif lexeme in comments:
+            token_type = "Comment"
+        elif lexeme in typecast:
+            token_type = "Typecast"
         else:
+            # print(lexeme)
             token_type = "Other Keyword"
 
         lexemes["keywords"].append(lexeme)
@@ -208,7 +226,7 @@ def tokenize_line(line, lexemes, all_tokens, line_cnt):
         if (identifier_text not in constructs and
                 not is_within_positions(identifier.span(), positions["keywords"]) and
                 not is_within_positions(identifier.span(), positions["literals"])):
-
+            
             # Heuristic-based classification of the identifier
             identifier_type = "Variable"  # Default classification
 
@@ -224,7 +242,22 @@ def tokenize_line(line, lexemes, all_tokens, line_cnt):
             # Check if the identifier is part of a function (e.g., "HOW IZ I")
             for keyword in function_keywords:
                 if keyword in line[:identifier.start()]:  # Check if keyword precedes the identifier
-                    identifier_type = "Function"
+                    function_line = line[:identifier.start()].split()
+                    if function_line[len(function_line)-1] == "YR":
+                        identifier_type = "Function Parameter"
+                    else:
+                        identifier_type = "Function"
+                    break
+                
+            for keyword in function_call:
+                if keyword in line[:identifier.start()]:  # Check if keyword precedes the identifier
+                    function_line = line[:identifier.start()].split()
+                    print(function_line[len(function_line)-1])
+                    if function_line[len(function_line)-1] == "YR":
+                        # identifier_type = "Function Parameter"
+                        pass
+                    elif function_line[len(function_line)-1] == "IZ":
+                        identifier_type = "Function"
                     break
 
             # Check if the identifier is part of a loop (e.g., "IM IN YR")
@@ -250,14 +283,24 @@ def tokenize_line(line, lexemes, all_tokens, line_cnt):
                 is_within_positions(text.span(), positions["literals"]) or
                 is_within_positions(text.span(), positions["identifiers"])):  # Unclassified token
             lexeme = text.group().strip()
-            lexemes.setdefault("errors", []).append(lexeme)
-            all_tokens.append({
+            if lexeme == "+":
+                print(lexeme)
+                all_tokens.append({
                 "token": lexeme,
-                "type": "Error",
+                "type": "Concatenate",
                 "line": line_cnt,
                 "start": text.start(),
                 "end": text.end()
-            })
+                })
+            else:
+                lexemes.setdefault("errors", []).append(lexeme)
+                all_tokens.append({
+                    "token": lexeme,
+                    "type": "Error",
+                    "line": line_cnt,
+                    "start": text.start(),
+                    "end": text.end()
+                })
 
 
 def is_within_positions(span, positions):

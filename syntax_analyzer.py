@@ -281,9 +281,30 @@ class SyntaxAnalyzer:
         """Parse the <program> rule."""
         self.match("Program Delimiter", "HAI")  # Start of the program
         while self.current_token and self.current_token["token"] != "KTHXBYE":
-            self.parse_statement()  # Parse statements within the program
+            self.parse_toplevel()  # Parse statements within the program
         self.match("Program Delimiter", "KTHXBYE")  # End of the program
 
+    def parse_toplevel(self):
+        """Parse the <toplevel> rule."""
+        if not self.current_token:
+            return
+
+        token_type = self.current_token["type"]
+        token_value = self.current_token["token"]
+
+        if token_type == "Function Delimiter":
+            self.parse_function()
+        elif token_type == "Control Flow":
+            self.parse_control_flow()
+        elif token_type == "Switch":
+            self.parse_switch()
+        elif token_type == "Loop Delimiter":
+            self.parse_loop()
+        elif token_type == "Data Initialization":
+            self.parse_initialization()
+        else:
+            self.parse_statement()
+        
     def parse_statement(self):
         """Parse the <statement> rule."""
         if not self.current_token:
@@ -298,18 +319,20 @@ class SyntaxAnalyzer:
             self.parse_print()
         elif self.current_token["type"] == "Input/Output" and self.current_token["token"] == "GIMMEH":
             self.parse_input()
-        elif token_type == "Control Flow":
-            self.parse_control_flow()
         elif token_type == "Data Initialization":
             self.parse_initialization()
         elif token_type == "Mathematical Operator":
             self.parse_mathop()
+        elif token_type == "Logical Operator":
+            self.parse_logicop()
         elif token_type == "Variable":
-            self.parse_variable_assignment()
-        elif token_type == "Loop Delimiter":
-            self.parse_loop()
-        elif token_type == "Function Delimiter":
-            self.parse_function()
+            self.parse_identifier()
+        elif token_type == "Function Call":
+            self.parse_function_call()
+        elif token_type == "Typecast" and token_type == "MAEK":
+            self.parse_exp_typecast()
+        # elif token_type == "Comment":
+
         else:
             self.raise_error("a valid statement")
 
@@ -321,6 +344,31 @@ class SyntaxAnalyzer:
             # self.advance()
             self.match("Data Declaration", "ITZ")
             self.parse_value()
+    def parse_control_flow(self):
+        self.match("Control Flow", "O RLY?")
+        self.match("Control Flow", "YA RLY")
+        while self.current_token and self.current_token["token"] != "NO WAI":
+            self.parse_statement()
+        self.match("Control Flow", "NO WAI")
+        while self.current_token and self.current_token["token"] != "OIC":
+            self.parse_statement()
+        self.match("Control Flow", "OIC")
+
+    def parse_switch(self):
+        self.match("Switch", "WTF?")
+        while self.current_token["token"] != "OMGWTF":
+            self.match("Switch", "OMG")
+            self.parse_value()
+            while self.current_token["token"] != "GTFO":
+                self.parse_statement()
+            self.match("Return Statement", "GTFO")
+        self.match("Switch", "OMGWTF")
+        while self.current_token and self.current_token["token"] != "OIC":
+            self.parse_statement()
+        
+        self.match("Control Flow", "OIC")
+
+
 
     def parse_initialization(self):
         """Parse the <initialization> rule"""
@@ -333,6 +381,10 @@ class SyntaxAnalyzer:
         """Parse the <identifier> rule."""
         if self.current_token and self.current_token["type"] == "Variable":
             self.advance()
+            if self.current_token["type"] == "Typecast":
+                self.parse_imp_typecast()
+            elif self.current_token["type"] == "Assignment Operator":
+                self.parse_variable_assignment()
         elif self.current_token and self.current_token["type"] == "Loop":
             self.advance()
         elif self.current_token and self.current_token["type"] == "Function":
@@ -340,14 +392,31 @@ class SyntaxAnalyzer:
         else:
             self.raise_error("Identifier")
 
+    def parse_imp_typecast(self):
+        self.match("Typecast", "IS NOW A")
+        self.match("Literal")
+
+    def parse_exp_typecast(self):
+        self.match("Typecast", "MAEK")
+        self.match("Variable")
+        self.match("Literal")
+
     def parse_value(self):
         """Parse the <value> rule."""
-        if self.current_token and self.current_token["type"] in ["NUMBR", "NUMBAR", "YARN", "TROOF", "Literal", "Variable" ,"Identifier", "Mathematical Operator"]:
-            print(self.current_token['token'])
+        if self.current_token and self.current_token["type"] in ["Typecast", "Concatenate", "Logical Operator", "NUMBR", "NUMBAR", "YARN", "TROOF", "Literal", "Variable" ,"Identifier", "Mathematical Operator"]:
+            
             if self.current_token["type"] == "Mathematical Operator":
                 # print(self.current_token['token'])
                 self.parse_mathop()
-                
+            elif self.current_token["type"] == "Logical Operator":
+                # print(self.current_token['token'])
+                self.parse_logicop()
+            elif self.current_token["type"] == "Concatenate":
+                self.parse_concatenate()
+            elif self.current_token["type"] == "Typecast" and self.current_token["token"] == "MAEK":
+                self.parse_exp_typecast()
+            elif self.current_token and self.current_token["type"] == "Variable":
+                self.parse_identifier()
             else:
                 # print(self.current_token['token'])
                 self.advance()
@@ -356,6 +425,7 @@ class SyntaxAnalyzer:
     
     def parse_connector(self, connector):
         self.match("Connector", connector)
+        return True
         
 
     def parse_mathop(self):
@@ -370,8 +440,7 @@ class SyntaxAnalyzer:
         
 
     def parse_variable_assignment(self):
-        """Parse variable assignment statements."""
-        self.parse_identifier()  # The variable being assigned
+        """Parse variable assignment statements."""  # The variable being assigned
         self.match("Assignment Operator", "R")  # The assignment operator
         self.parse_value()  # The value or expression being assigned
 
@@ -382,9 +451,16 @@ class SyntaxAnalyzer:
 
     def parse_function_call(self):
         """Parse function call statements."""
-        self.parse_identifier()
+        self.match("Function Call")
+        self.match("Function")
+        while self.current_token and self.current_token["token"] in ["YR", "AN"]:
+            if self.current_token["token"] == "YR":
+                self.advance()
+                self.parse_value()
+            elif self.parse_connector("AN"):
+                pass
         if self.current_token and self.current_token["token"] == "MKAY":
-            self.match("Input/Output", "MKAY")
+            self.match("Function Call", "MKAY")
         else:
             self.raise_error("'MKAY' after function call")
 
@@ -394,26 +470,46 @@ class SyntaxAnalyzer:
 
         # Checks if there is function identifier
         if self.current_token["type"] != "Function":
-            self.raise_error("Function identifier after 'HOW IZ I'")
+            self.raise_error("Invalid function identifier after 'HOW IZ I'")
         self.advance()
 
         # Parse parameters if there are any
-        while self.current_token and self.current_token["token"] == ["YR", "AN"]:
-            self.match("Function Parameter", "YR")
-            self.parse_identifier()
+        while self.current_token and self.current_token["token"] in ["YR", "AN"]:
+            if self.current_token["token"] == "YR":
+                self.advance()
+                self.match("Function Parameter")
+            elif self.parse_connector("AN"):
+                pass
         
         # Ensure there are no function declarations inside and handle the statements
         return_found = False
         while self.current_token and self.current_token["token"] != "IF U SAY SO":
             if self.current_token["token"] == "HOW IZ I":
                 self.raise_error("Nested function declaration found in the function body")
-            if self.current_token["token"] in ["FOUND YR", "GTFO"]:
+            if self.current_token["token"] == "FOUND YR":
+                self.match("Return Statement", self.current_token["token"])
+                if self.current_token["type"] in ["NUMBR", "NUMBAR", "YARN", "TROOF", "Function", "Variable"]:
+                    self.advance()
+                    return_found = True
+                    break
+                elif self.current_token["type"] == "Mathematical Operator":
+                    self.parse_mathop()
+                    return_found = True
+                    break
+                elif self.current_token["type"] == "Logical Operator":
+                    self.parse_logicop()
+                    return_found = True
+                    break
+                else:
+                    self.raise_error("Valid return value")
+            elif  self.current_token["token"] == "GTFO":
                 self.match("Return Statement", self.current_token["token"])
                 return_found = True
+                break
             else:
                 self.parse_statement()
         
-        if not return_found:
+        if return_found == False:
             self.raise_error("Missing return statement ('FOUND YR' or 'GTFO') inside the function")
         self.match("Function Delimiter", "IF U SAY SO")
         
@@ -454,22 +550,45 @@ class SyntaxAnalyzer:
 
     def parse_print(self):
         """Parse the <print> rule."""
+        current_line = self.current_token["line"]
         self.match("Input/Output", "VISIBLE")
-        if self.current_token and self.current_token["type"] in ["NUMBR", "NUMBAR", "YARN", "TROOF", "Literal","Identifier", "Function", "Variable", "Mathematical Operator"]:
+        while self.current_token and self.current_token['line']==current_line and self.current_token["type"] in ["Logical Operator", "Concatenate", "NUMBR", "NUMBAR", "YARN", "TROOF", "Literal","Identifier", "Function", "Variable", "Mathematical Operator"]:
+        # if self.current_token and self.current_token["type"] in ["Connector", "NUMBR", "NUMBAR", "YARN", "TROOF", "Literal","Identifier", "Function", "Variable", "Mathematical Operator"]:
             if self.current_token["type"] == "Mathematical Operator":
                 self.parse_mathop()
-            else:
+            elif self.current_token["type"] == "Logical Operator":
+                self.parse_logicop()
+            elif self.current_token["type"] == "Concatenate":
+                self.parse_concatenate()
+            elif self.current_token["type"] in ["NUMBR", "NUMBAR", "YARN", "TROOF", "Function", "Variable"]:
                 self.advance()
-        else:
-            print("print error")
-            self.raise_error("Literal or Identifier")
+            else:
+                self.raise_error("Valid print operands")
 
-    def parse_control_flow(self):
+            if self.current_token['line']==current_line and (self.current_token["token"] == "+" or self.current_token["token"] == "AN"):
+                self.advance()
+            elif  self.current_token['line']!=current_line:
+                break
+            else:
+                self.raise_error("Valid print connector")
+
+    def parse_concatenate(self):
+        self.match("Concatenate", "SMOOSH")
+        current_line = self.current_token["line"]
+        while current_line == self.current_token["line"] and self.current_token["type"] in ["YARN", "Variable"]:
+            self.match(self.current_token["type"])
+            if current_line == self.current_token["line"]:
+                self.parse_connector("AN")
+            else:
+                break
+
+    def parse_initialization(self):
         """Parse the <control_flow> rule."""
         if self.current_token["token"] == "WAZZUP":
-            self.match("Control Flow", "WAZZUP")
-            self.parse_statement()
-            self.match("Control Flow", "BUHBYE")
+            self.match("Data Initialization", "WAZZUP")
+            while self.current_token and self.current_token["token"] != "BUHBYE":
+                self.parse_declaration()
+            self.match("Data Initialization", "BUHBYE")
         else:
             self.raise_error("a valid control flow construct")
 
