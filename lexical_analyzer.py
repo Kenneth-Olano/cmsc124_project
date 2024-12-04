@@ -5,6 +5,7 @@ from tkinter import filedialog, messagebox, ttk
 import sys
 sys.path.append('C:/ACADEMICS/university of the philippines/CMSC124/project')
 from syntax_analyzer import SyntaxAnalyzer
+from semantic_analyzer import SemanticAnalyzer
 
 
 class Token:
@@ -116,6 +117,8 @@ def get_file():
         append_terminal_output(f"\"{os.path.basename(file_path)}\" successfully read!")
         a=SyntaxAnalyzer(all_tokens)
         a.parse_program()
+        b=SemanticAnalyzer(all_tokens)
+        b.analyze()
         # syntax_analyzer.syntax_analyzer(all_tokens)  # Pass tokens to the syntax analyzer
     except Exception as e:
         messagebox.showerror("Error", f"An error occurred while reading the file:\n{e}")
