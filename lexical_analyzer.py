@@ -16,6 +16,14 @@ class Token:
         self.start = start        # The starting position of the token in the line
         self.end = end            # The ending position of the token in the line
 
+    def __hash__(self):
+        return hash((self.token))
+
+    def __eq__(self, value):
+        if isinstance(value, Token):
+            return self.token
+        return None
+    
     def __repr__(self):
         return f"Token({self.token}, {self.type}, Line: {self.line}, Pos: {self.start}-{self.end})"
 
@@ -116,8 +124,9 @@ def get_file():
         update_line_numbers()
         append_terminal_output(f"\"{os.path.basename(file_path)}\" successfully read!")
         a=SyntaxAnalyzer(all_tokens)
-        a.parse_program()
-        b=SemanticAnalyzer(all_tokens)
+        func_dict = a.parse_program()
+        print(func_dict)
+        b=SemanticAnalyzer(all_tokens, func_dict)
         b.analyze()
         # syntax_analyzer.syntax_analyzer(all_tokens)  # Pass tokens to the syntax analyzer
     except Exception as e:

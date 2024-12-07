@@ -10,10 +10,7 @@ HAI
     IF U SAY SO
 
     HOW IZ I printNum YR x
-        FOUND YR x
-    IF U SAY SO
-
-    HOW IZ I printNum YR x
+        VISIBLE ayo
         FOUND YR x
     IF U SAY SO
 

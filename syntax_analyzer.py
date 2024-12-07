@@ -1,252 +1,12 @@
 from tkinter import messagebox
 
-# def syntax_analyzer(lexemes):
-#     constructs = {
-#         "programdelimiter":("HAI", "KTHXBYE"),
-#         "initialize": ("WAZZUP", "BUHBYE"),
-#         "typecast": ("MAEK", "A", "IS NOW A"),
-#         "declaration": ("I HAS A", "ITZ"),
-#         "comparison":("BOTH SAEM", "DIFFRINT"),
-#         "arithmetic":('SUM OF','DIFF OF','PRODUKT OF', 'QUOSHUNT OF', 'MOD OF', 'BIGGR OF', 'SMALLR OF'),
-#         "literal": ('NUMBR', 'NUMBAR', 'YARN', 'TROOF', 'NOOB'),
-#         "boolean": ('BOTH OF', 'EITHER OF', 'WON OF', 'NOT'),
-#         "infboolean": ('ALL OF', 'ANY OF'),
-#         "loopdelimiter" : ('IM IN YR', 'IM OUTTA YR', 'YR', 'TIL', 'WILE'),
-#         "loopop": ('UPPIN', 'NERFIN'),
-#         "funcdelimiter": ('HOW IZ I', 'IF U SAY SO'),
-#         "funccall": ('I IZ', 'MKAY'),
-#         "funcparam": ('YR', 'AN'),
-#         "switch": ("WTF?", "OMGWTF", "OIC"),
-#         "case": ("OMG", "GTFO"),
-#         "ifelse": ("O RLY", "YA RLY", "NO WAI", "OIC"),
-#         "return": ('FOUND YR', 'GTFO'),
-#         "concat": ("SMOOSH"),
-#         "input": ("GIMMEH"),
-#         "print": ("VISIBLE"),
-#         "valconnect": ("AN"),
-#         "assignment": ("R"),
-#         "value": ("literal", "varident", "funcident"),
-#         "toplvl": ("funcdelimiter", "expr", "toplvl"),
-#         "expr": ("expr", 
-#                 "print",
-#                 "arithmetic",
-#                 "boolean",
-#                 "infboolean",
-#                 "assignment",
-#                 "comparison",
-#                 "switch",
-#                 "ifelse",
-#                 "loopdelimiter",
-#                 "input",
-#                 "concat",
-#                 "typecast",
-#                 "funccall",
-#                 "return",
-#                 ""),
-#         "newline": "\n"
-#     }
-#     program_stack = []
-#     func_stack = []
-#     ifelse_stack = []
-#     initialize_stack = []
-#     loop_stack = []
-#     vardeclaration_stack = []
-#     count = 0
-#     for lexeme in lexemes: 
-#         print(lexeme)
-#         if lexeme['type'] == "Loop": #WILL BE CHANGED TO "LoopIdentifier" once specified
-#             # print(lexeme)
-#             if len(loop_stack) > 0 and type(loop_stack[len(loop_stack)-1]) == dict and (loop_stack[len(loop_stack)-1]['type'] == "Loop"):
-#                 pass
-#             else:
-#                 if len(loop_stack) > 0 and (loop_stack[len(loop_stack)-1] == "IM IN YR" or loop_stack[len(loop_stack)-1] == "IM IN YR"):
-#                     loop_stack.append(lexeme)
-#                 elif len(loop_stack) > 0 and (loop_stack[len(loop_stack)-1] == "IM OUTTA YR") and len(loop_stack) == 7 and "IM IN YR" in loop_stack:
-#                     loop_stack.clear()
-#                 elif len(loop_stack) > 0 and (loop_stack[len(loop_stack)-1] == "YR"):
-#                     loop_stack.append(lexeme)
-#                 elif len(loop_stack) > 0 and (loop_stack[len(loop_stack)-1] == "WILE" or loop_stack[len(loop_stack)-1] == "TIL"):
-#                     # messagebox.showerror("SyntaxError", f"No loop label provided.")
-#                     # # print(lexeme)
-#                     # print("No loop label provided.")
-#                     # return
-#                     continue
-#                 elif len(loop_stack) > 0 and (loop_stack[len(loop_stack)-1] != "IM OUTTA YR") and len(loop_stack) == 6 and "IM IN YR" in loop_stack:
-#                     messagebox.showerror("SyntaxError", f"Loop not properly delimited. No 'IM OUTTA YR' detected.")
-#                     print("Loop not properly delimited. No 'IM OUTTA YR' detected.")
-#                     return
-        
-#         if lexeme['type'] == "Literal":
-#             if len(vardeclaration_stack)> 0 and vardeclaration_stack[len(vardeclaration_stack)-1] == "ITZ":
-#                 vardeclaration_stack.clear()
-
-#         if lexeme['type'] == "Variable":
-#             if len(vardeclaration_stack)> 0 and (vardeclaration_stack[len(vardeclaration_stack)-1] == "I HAS A" or vardeclaration_stack[len(vardeclaration_stack)-1] == "ITZ"):
-#                 vardeclaration_stack.append(lexeme)
-#             elif len(vardeclaration_stack) > 0 and vardeclaration_stack[len(vardeclaration_stack)-1] != "I HAS A":
-#                 messagebox.showerror("SyntaxError", f"Variable name invoked without variable declaration keyword I HAS A")
-#                 print("Variable name invoked without variable declaration keyword I HAS A.")
-#                 # return
-            
-
-#         for keys in constructs.keys():
-#             if lexeme['token'] in constructs[keys]:
-#                 if keys == "programdelimiter":
-#                     # print("delimiter")
-#                     if lexeme['token'] == "HAI":
-#                         program_stack.append(lexeme['token'])
-#                     elif lexeme['token'] == "KTHXBYE":
-#                         try:
-#                             program_stack.pop()
-#                         except:    
-#                             messagebox.showerror("SyntaxError", f"Invalid program delimiters")
-#                             print("Invalid program delimiters")
-#                             return
-
-            
-#                 elif keys == "initialize":
-#                     if lexeme['token'] == "WAZZUP":
-#                         initialize_stack.append(lexeme['token'])
-#                     elif lexeme['token'] == "BUHBYE":
-#                         try:
-#                             initialize_stack.pop()
-#                         except:    
-#                             messagebox.showerror("SyntaxError", f"Invalid syntax for variable initialization. BUHBYE before WAZZUP.")
-#                             print("Invalid variable initialization delimiters")
-#                             return
-                
-                
-#                 elif keys == "declaration":
-#                     if lexeme['token'] == "I HAS A":
-#                         if "I HAS A" not in vardeclaration_stack:
-#                             vardeclaration_stack.append(lexeme['token'])
-#                         elif type(vardeclaration_stack[len(vardeclaration_stack)-1]) == dict and vardeclaration_stack[len(vardeclaration_stack)-1]['type'] == "Variable":
-#                             vardeclaration_stack.clear()
-#                             vardeclaration_stack.append(lexeme['token'])
-#                     elif lexeme['token'] == "ITZ":
-#                         if "I HAS A" in vardeclaration_stack and type(vardeclaration_stack[len(vardeclaration_stack)-1])==dict and vardeclaration_stack[len(vardeclaration_stack)-1]['type'] == "Variable":
-#                             vardeclaration_stack.append(lexeme['token'])
-#                         else:
-#                             messagebox.showerror("SyntaxError", f"ITZ invoked before variable name declaration I HAS A.")
-#                             print("ITZ invoked before variable name declaration I HAS A.")
-#                             return
-
-                    
-
-#                 elif keys == "loopdelimiter": #HAS TO BE REVISED ONCE TOKENS ARE FIXED AND APPENDED IN SEQUENCE
-#                     if lexeme['token'] == "IM IN YR":
-#                         loop_stack.append(lexeme['token'])
-#                     elif lexeme['token'] == "YR":
-#                         if loop_stack[len(loop_stack)-1] in constructs["loopop"]:
-#                             loop_stack.append(lexeme['token'])
-#                         else:
-#                             messagebox.showerror("SyntaxError", f"No loop operation provided.")
-#                             print("No loop operation provided.")
-#                             return
-#                     elif lexeme['token'] == "TIL" or lexeme['token'] == "WILE":
-#                         if type(loop_stack[len(loop_stack)-1]) == dict and loop_stack[len(loop_stack)-1]['type'] == "Loop":
-#                             loop_stack.append(lexeme['token'])
-#                     elif lexeme['token'] == "IM OUTTA YR":
-#                         loop_stack.append(lexeme['token'])
-                        
-                    
-#                         # if len(loop_stack) > 0 and loop_stack[len(loop_stack)-1] == "YR":
-#                         #     loop_stack.append(lexeme)
-#                         # if len(loop_stack) > 0 and loop_stack[len(loop_stack)-1] == "IM OUTTA YR":
-#                         #     if len(loop_stack) == 7:
-#                         #         loop_stack.clear()
-
-#                 elif keys == "loopop":
-#                     if (lexeme['token'] == "UPPIN" or lexeme['token'] == "NERFIN") and type(loop_stack[len(loop_stack)-1]) == dict and loop_stack[len(loop_stack)-1]['type'] == "Loop": 
-#                         loop_stack.append(lexeme['token'])
-                    
-
-#                 # Function delimiter
-#                 elif keys == "funcdelimiter":
-#                     # print("function")
-#                     # Function declaration
-#                     if lexeme['token'] == "HOW IZ I":
-#                         if "HOW IZ I" in func_stack:
-#                         # if func_stack and func_stack[-1] == lexeme['token']:
-#                             messagebox.showerror("SyntaxError", f"Nested function declarations are not allowed")
-#                             print("Error: Nested function declaration")
-#                             return
-                        
-#                         # Push 'HOW IZ I' to the stack
-#                         func_stack.append(lexeme['token'])
-#                     elif lexeme['token'] == "IF U SAY SO":
-#                         # Checks if the latest function declaration has a matching 'IF U SAY SO'
-#                         if func_stack[len(func_stack-1)]  == lexeme['token']:
-#                             func_stack.pop()
-#                         else:    
-#                             messagebox.showerror("SyntaxError", f"'IF U SAY SO' has no matching 'HOW IZ I'")
-#                             print("Error: Unmatched 'IF U SAY SO'")
-#                             return
-
-#                 elif keys == "ifelse":
-#                     # print("ifelse")
-#                     if lexeme['token'] == "O RLY":
-#                         ifelse_stack.append(lexeme['token'])
-#                     elif lexeme['token'] == "YA RLY": #if YA RLY is encountered
-#                         if "O RLY" not in ifelse_stack: #check if it is enclosed in an O RLY clause
-#                             messagebox.showerror("SyntaxError", f"YA RLY imposed with imposing O RLY first.")
-#                             return
-#                         else: #push to stack
-#                             ifelse_stack.append(lexeme['token'])
-#                     elif lexeme['token'] == "NO WAI": #when NO WAI is encoutered
-#                         error_string = ""
-#                         if "O RLY" not in ifelse_stack: #check if it is enclosed by an O RLY clause
-#                             error_string+= "NO WAI imposed with imposing O RLY first.\n"
-#                         if "YA RLY" not in ifelse_stack: #also check if NO WAI is preceeded by a YA RLY clase
-#                             error_string += "NO WAI imposed with imposing YA RLY first."
-#                         if len(error_string) != 0:
-#                             messagebox.showerror("SyntaxError", error_string)
-#                             return
-#                     elif lexeme['token'] == "OIC": #if OIC is encountered
-#                         try:
-#                             if ifelse_stack[len(ifelse_stack)-1] == "YA RLY": #the top of stack should always be YA RLY when OIC is encountered, pop 2x if so
-#                                 ifelse_stack.pop()
-#                                 ifelse_stack.pop()
-#                         except:
-#                             messagebox.showerror("SyntaxError", f"OIC Keyword: Invalid if-else delimiters")
-#                             print("OIC Invalid if-else delimiters")
-#                             return
-#                 count+=1
-#                 # print(lexeme)
-#         print(func_stack)
-#         # print(loop_stack)
-                
-#     if(len(program_stack) == 0):
-#         print("> VALID PROGRAM DELIMITERS")
-#     else:
-#         print("Invalid program delimiters")
-
-#     if(len(initialize_stack) == 0):
-#         print("> VALID INITIALIZATION DELIMITERS")
-#     else:
-#         print("Invalid initialization section delimiters")
-
-#     if len(vardeclaration_stack) == 0:
-#         print("> VALID VARIABLE DECLARATIONS")
-#     else:
-#         print("Invalid variable declaration")
-#     if (len(loop_stack) == 0):
-#         print("> VALID LOOP")
-#     else:
-#         print("Invalid loop syntax")
-
-#     if(len(ifelse_stack) == 0):
-#         print("> VALID IF ELSE")
-#     else:
-#         print("Invalid if else delimiters")
-
-
-
 class SyntaxAnalyzer:
     def __init__(self, tokens):
         self.tokens = tokens  # List of tokens generated by the lexical analyzer
         self.current_index = 0  # Pointer to the current token
         self.current_token = self.tokens[self.current_index] if self.tokens else None
+        self.function_dict = {}
+
 
     def advance(self):
         """Advance the token pointer to the next token."""
@@ -283,6 +43,7 @@ class SyntaxAnalyzer:
         while self.current_token and self.current_token["token"] != "KTHXBYE":
             self.parse_toplevel()  # Parse statements within the program
         self.match("Program Delimiter", "KTHXBYE")  # End of the program
+        return self.function_dict
 
     def parse_toplevel(self):
         """Parse the <toplevel> rule."""
@@ -471,12 +232,15 @@ class SyntaxAnalyzer:
         # Checks if there is function identifier
         if self.current_token["type"] != "Function":
             self.raise_error("Invalid function identifier after 'HOW IZ I'")
+        self.function_dict[self.current_token['token']] = {}
+        current_function =self.current_token['token']
         self.advance()
 
         # Parse parameters if there are any
         while self.current_token and self.current_token["token"] in ["YR", "AN"]:
             if self.current_token["token"] == "YR":
                 self.advance()
+                self.function_dict[current_function][self.current_token['token']] = None
                 self.match("Function Parameter")
             elif self.parse_connector("AN"):
                 pass
