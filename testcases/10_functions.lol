@@ -10,7 +10,6 @@ HAI
     IF U SAY SO
 
     HOW IZ I printNum YR x
-        VISIBLE ayo
         FOUND YR x
     IF U SAY SO
 
@@ -23,14 +22,14 @@ HAI
     GIMMEH num1
     GIMMEH num2
 
-    I IZ addNuM YR num1 AN YR num2 MKAY
+    I IZ addNum YR num1 AN YR num2 MKAY
     VISIBLE IT
 
     GIMMEH name
     I IZ printName YR name MKAY
     VISIBLE IT
 
-    I IZ printNum YR SUM OF x AN 2 MKAY
+    I IZ printNum YR SUM OF num1 AN 2 MKAY
     VISIBLE IT
 
 KTHXBYE

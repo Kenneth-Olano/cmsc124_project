@@ -53,22 +53,24 @@ class SemanticAnalyzer:
         
         if token_type == 'Data Declaration' and token_value == "I HAS A":
             # Check if it's a variable declaration like "I HAS A"
-            self.declare_variable(token)
-        elif (token_type == 'Data Declaration' and token_value == "ITZ") or (token_type=='Assignment Operator' and token_value=="R"):
+            
+            next_token = self.getnext()
+            self.declare_variable(next_token)
+        elif (token_type == 'Data Declaration' and token_value == "ITZ"):
             # Check if it's a variable declaration like "I HAS A"
             self.assignval_tovar(token)
 
-        # elif token_type == 'Assignment Operator':
-        #     # Check if the assignment is to a valid variable
-        #     self.check_variable_assignment(token)
+        elif token_type == 'Assignment Operator' and token_value == "R":
+            # Check if the assignment is to a valid variable
+            self.check_variable_assignment(token)
         
         elif token_type == 'Function Delimiter' and token_value == "HOW IZ I":
             # Function declaration or call (e.g., "HOW IZ I")
             self.process_function(token)
         
-        # elif token_type == 'Function Call':
-        #     # Check the function call (e.g., "I IZ")
-        #     self.check_function_call(token)
+        elif token_type == 'Function Call' and token_value == "I IZ":
+            # Check the function call (e.g., "I IZ")
+            self.check_function_call(token)
         
         # elif token_type == 'Loop Delimiter':
         #     # Check if we are inside a loop for variable scope management
@@ -77,12 +79,10 @@ class SemanticAnalyzer:
         # Further checks could be added here for specific types of tokens
 
     def declare_variable(self, token):
-        next_token = self.getnext()
-        variable_name = next_token['token']
+        variable_name = token['token']
         
         if variable_name not in self.symbol_table:
             self.symbol_table[variable_name] = {'type': 'undefined', 'initialized': False, 'value':None}
-            print(self.symbol_table)
         else:
             # Raise a semantic error if the variable is re-declared
             self.raise_semantic_error(self.current_token, f"Variable '{variable_name}' is already declared.")
@@ -99,16 +99,24 @@ class SemanticAnalyzer:
 
 
     def check_variable_assignment(self, token):
-        variable_name = token['token']
-        
+        next_token = self.getnext()
+        variable_name = next_token['token'] 
+        # print(self.symbol_table)
         if variable_name not in self.symbol_table:
-            self.raise_semantic_error(self.current_token, f"Variable '{variable_name}' is not declared.")
+            if next_token['type'] in ["NUMBR", "NUMBAR", "YARN", "TROOF"]:
+                variable = list(self.symbol_table)[len(self.symbol_table)-1]
+                self.symbol_table[variable]['type'] = next_token['type']
+                self.symbol_table[variable]['initialized'] = True
+                self.symbol_table[variable]['value'] = next_token['token'] 
+            elif  next_token['token'] not in constructs:
+                self.raise_semantic_error(self.current_token, f"Variable '{variable_name}' is not declared.")
         else:
             self.symbol_table[variable_name]['initialized'] = True
 
     def process_function(self, token):
-        self.advance()
-        function_name = self.current_token['token']
+        token_index = self.current_index+1
+        next_token = self.getnext()
+        function_name = next_token['token']
         print(function_name)
         # Add function to function table if not already defined
         if function_name not in self.function_table:
@@ -118,13 +126,13 @@ class SemanticAnalyzer:
                 for parameter in self.function_dict[function_name].keys():
                     
                     self.function_table[function_name]['parameters'].append(parameter)
-                print(self.function_table[function_name]['parameters'])
-
-                while self.current_token['token'] != "IF U SAY SO":
-                    self.advance()
-                    if self.current_token['type'] == "Variable":
-                        if self.current_token['token'] not  in self.function_table[function_name]['parameters']:
-                            self.raise_semantic_error(self.current_token, f'Variable {self.current_token['token']} is out of function {function_name} scope.')
+                
+                while (self.all_tokens[token_index])['token'] != "IF U SAY SO":
+                    token_index+=1
+                    if (self.all_tokens[token_index])['type'] == "Variable":
+                        if (self.all_tokens[token_index])['token'] not  in self.function_table[function_name]['parameters']:
+                            self.raise_semantic_error((self.all_tokens[token_index]), f'Variable {(self.all_tokens[token_index])['token']} is out of function {function_name} scope.')
+                            break
                 
         else:
             # Function already declared, check parameters and types if necessary
@@ -135,10 +143,30 @@ class SemanticAnalyzer:
         
 
     def check_function_call(self, token):
-        function_name = token['token']
+        token_index = self.current_index+1
+        next_token = self.getnext()
+        function_name = next_token['token']
+        print(function_name)
         
         if function_name not in self.function_table:
-            self.raise_semantic_error(self.current_token, f"Function '{function_name}' is not declared.")
+            self.raise_semantic_error(self.current_token, f"Function '{function_name}' is not declared. Call")
+        else:
+            parameter_count = 0
+            print("BRUH")
+            while (self.all_tokens[token_index])['token'] != "MKAY":
+                print((self.all_tokens[token_index])['token'])
+                token_index+=1
+                if (self.all_tokens[token_index])['type'] == "Variable":
+                    if (self.all_tokens[token_index])['token'] not in self.symbol_table:
+                        # print((self.all_tokens[token_index])['token'])
+                        self.raise_semantic_error((self.all_tokens[token_index]), f'Variable {(self.all_tokens[token_index])['token']} is not declared.')
+                        # print(f'Error in {(self.all_tokens[token_index])['token']}')
+                        break
+                    else:
+                        parameter_count+=1
+            if parameter_count != len(self.function_table[function_name]['parameters']):
+                self.raise_semantic_error((self.all_tokens[token_index]), f'Function call {function_name} has unmatched parameter count to function declaration.')
+
         
         # Further checks can be added to verify function parameters, return types, etc.
 
@@ -149,7 +177,6 @@ class SemanticAnalyzer:
 
     def check_uninitialized_variables(self):
         for variable, data in self.symbol_table.items():
-            print(data['initialized'])
             if (not data['initialized']):
                 # print(data['initialized'])
                 self.raise_semantic_error(self.current_token, f"Variable '{variable}' is used before initialization.")

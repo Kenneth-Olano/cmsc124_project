@@ -125,7 +125,6 @@ def get_file():
         append_terminal_output(f"\"{os.path.basename(file_path)}\" successfully read!")
         a=SyntaxAnalyzer(all_tokens)
         func_dict = a.parse_program()
-        print(func_dict)
         b=SemanticAnalyzer(all_tokens, func_dict)
         b.analyze()
         # syntax_analyzer.syntax_analyzer(all_tokens)  # Pass tokens to the syntax analyzer
