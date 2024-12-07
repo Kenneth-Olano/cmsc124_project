@@ -13,6 +13,9 @@ HAI
         FOUND YR x
     IF U SAY SO
 
+    HOW IZ I printNum YR x
+        FOUND YR x
+    IF U SAY SO
 
     WAZZUP
         I HAS A name

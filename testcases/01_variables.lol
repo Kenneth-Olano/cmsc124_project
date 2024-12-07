@@ -12,7 +12,6 @@ HAI
     BUHBYE
     
     VISIBLE "declarations"
-    VISIBLE monde
     VISIBLE num
     VISIBLE name
     VISIBLE fnum

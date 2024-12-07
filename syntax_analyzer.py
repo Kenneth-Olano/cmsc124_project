@@ -370,12 +370,12 @@ class SyntaxAnalyzer:
 
 
 
-    def parse_initialization(self):
-        """Parse the <initialization> rule"""
-        self.match("Data Initialization", "WAZZUP")
-        while self.current_token and self.current_token["token"] != "BUHBYE":
-            self.parse_declaration()
-        self.match("Data Initialization", "BUHBYE")
+    #def parse_initialization(self):
+       # """Parse the <initialization> rule"""
+     #   self.match("Data Initialization", "WAZZUP")
+      #  while self.current_token and self.current_token["token"] != "BUHBYE":
+         #   self.parse_declaration()
+        #self.match("Data Initialization", "BUHBYE")
 
     def parse_identifier(self):
         """Parse the <identifier> rule."""
