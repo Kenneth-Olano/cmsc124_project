@@ -1,7 +1,7 @@
 HAI
     WAZZUP
-        I HAS A x
-        I HAS A y
+        I HAS A x ITZ WIN
+        I HAS A y ITZ "2"
     BUHBYE
     
     GIMMEH x
