@@ -85,7 +85,8 @@ class SemanticAnalyzer:
         elif token_type == 'Assignment Operator' and token_value == "R":
             # Check if the assignment is to a valid variable
             self.check_variable_assignment(token)
-        
+        elif token_value == "WTF?":
+            self.execute_switch(self.current_index)
         elif token_type == 'Function Delimiter' and token_value == "HOW IZ I":
             # Function declaration or call (e.g., "HOW IZ I")
             self.process_function(token)
@@ -100,8 +101,58 @@ class SemanticAnalyzer:
         # elif token_type == 'Loop Delimiter':
         #     # Check if we are inside a loop for variable scope management
         #     self.handle_loop_scope(token)
-        
+        elif token_type == "Variable":
+            if token_value in self.symbol_table:
+                self.IT = self.symbol_table[token_value]
+            else:
+                self.raise_semantic_error(token, f'Variable {token['token']} should be declared.')
         # Further checks could be added here for specific types of tokens
+
+
+
+    def execute_switch(self, index):
+        self.current_index = self.current_index+1
+        self.current_token = self.all_tokens[self.current_index]
+        print(self.IT)
+        while self.current_token['token'] != "OMGWTF":
+            if self.current_token['token'] == "OMG":
+                self.current_index+=1
+                self.current_token = self.all_tokens[self.current_index]
+                if self.current_token['type'] in ["NUMBR", "NUMBAR", "YARN", "TROOF", "Variable"]:
+                    value = None
+                    if self.current_token['type'] == "NUMBR":
+                        value = int(self.current_token['token'])
+                    elif self.current_token['type'] == "NUMBAR":
+                        value = float(self.current_token['token'])
+                    elif self.current_token['type'] == "YARN":
+                        value = self.current_token['token'][1:len(self.current_token['token'])-1]
+                    elif self.current_token['type'] == "TROOF":
+                        value = self.current_token['token']
+                    elif self.current_token['type'] == "Variable":
+                        if self.current_token['token'] in self.symbol_table:
+                            value = self.symbol_table[self.current_token['token']]['value']
+                        else:
+                            self.raise_semantic_error(self.current_token['token'], f'Variable {self.current_token['token']} should be declared.')
+                    print(value)
+                    if value == self.IT['value']:
+                        while self.current_token['token'] != "GTFO":
+                            print(self.current_token['token'])
+                            self.execute_statement(self.current_token, self.current_index)
+                            self.current_index+=1
+                            self.current_token = self.all_tokens[self.current_index]
+                        if self.current_token['token'] == "GTFO":
+                            self.advance()
+                            while self.current_token['token'] != "OIC":
+                                self.current_index+=1
+                                self.current_token = self.all_tokens[self.current_index]
+                        return
+                        
+            self.current_index+=1
+            self.current_token = self.all_tokens[self.current_index]
+        while self.current_token['token'] != "OIC":
+            self.execute_statement(self.current_token, self.current_index)
+            self.current_index+=1
+            self.current_token = self.all_tokens[self.current_index]
 
     def execute_input(self):
         variable = self.getnext()  # Retrieve the next token (e.g., the variable to store input)
@@ -313,6 +364,8 @@ class SemanticAnalyzer:
             self.visible(index)
         elif token['type'] == "Mathematical Operator":
             self.execute_math(index, [])
+        elif token['token'] == "GIMMEH":
+            self.execute_input()
 
 
     def execute_function(self, function_name, function_index):
