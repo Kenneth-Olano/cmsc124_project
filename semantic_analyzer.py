@@ -1,4 +1,5 @@
 from tkinter import filedialog, messagebox, ttk
+import tkinter as tk
 
 constructs = set([
     "HAI", "KTHXBYE", "WAZZUP", "BUHBYE", "BTW", "OBTW", "TLDR", "I HAS A", "ITZ", "R",
@@ -10,7 +11,7 @@ constructs = set([
 ])
 
 class SemanticAnalyzer:
-    def __init__(self, all_tokens, function_dict):
+    def __init__(self, all_tokens, function_dict, console_widget):
         self.all_tokens = all_tokens
         self.function_dict = function_dict
         self.symbol_table = {}  # Stores declared variables and their types
@@ -19,6 +20,13 @@ class SemanticAnalyzer:
         self.current_index = 0  # Pointer to the current token
         self.current_token = self.all_tokens[self.current_index] if self.all_tokens else None
         self.IT = None
+        self.console = console_widget
+
+    def log_to_console(self, message):
+        """Utility function to log messages to the console."""
+        self.console.config(state=tk.NORMAL)  # Enable the text widget
+        self.console.insert(tk.END, message + "\n")
+        self.console.config(state=tk.DISABLED)  # Disable editing
 
     def get_symbol_table(self):
         """Method to get the current symbol table."""
@@ -426,19 +434,19 @@ class SemanticAnalyzer:
         # print(next_token['token'])
         if next_token['type'] in ["NUMBR", "NUMBAR", "YARN", "TROOF"]:
             if next_token['type'] == "YARN":
-                self.IT = next_token['token'][1:len(next['token'])]
+                self.IT = next_token['token'][1:len(next_token['token'])]
             else:
                 self.IT = next_token['token']
-            print(f"> {self.IT}")
+            self.log_to_console(f"> {self.IT}")
         elif next_token['type'] == "Variable":
             if type(self.symbol_table[next_token['token']]['value']) == str and '\"' in self.symbol_table[next_token['token']]['value']:
                 self.IT =self.symbol_table[next_token['token']]['value'][1:-1]
             else:
                 self.IT = self.symbol_table[next_token['token']]['value']
-            print(f'> {self.IT}')
+            self.log_to_console(f'> {self.IT}')
         elif next_token['type'] == "Mathematical Operator":
             self.execute_math(index, [])
-            print(f'> {self.IT}')
+            self.log_to_console(f'> {self.IT}')
         else:
             # print(next_token['token'])
             pass

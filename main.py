@@ -3,6 +3,7 @@ from tkinter import filedialog, messagebox, ttk
 from lexical_analyzer import analyze_code  # Import the lexical analysis function
 from syntax_analyzer import SyntaxAnalyzer
 from semantic_analyzer import SemanticAnalyzer
+import traceback
 
 class LOLcodeApp:
     def __init__(self, root):
@@ -125,7 +126,7 @@ class LOLcodeApp:
             # Syntax and Semantic Analysis
             syntax_analyzer = SyntaxAnalyzer(all_tokens, self.console_text)
             func_dict = syntax_analyzer.parse_program()
-            semantic_analyzer = SemanticAnalyzer(all_tokens, func_dict)
+            semantic_analyzer = SemanticAnalyzer(all_tokens, func_dict, self.console_text)
             semantic_analyzer.analyze()
 
             # Get symbol table from the semantic analyzer and display it
@@ -141,6 +142,7 @@ class LOLcodeApp:
             self.console_text.config(state=tk.DISABLED)
 
         except Exception as e:
+            print(traceback.format_exc())  
             messagebox.showerror("Error", f"An error occurred while running the code: {e}")
 
 
