@@ -53,11 +53,11 @@ comments = {"BTW", "OBTW", "TLDR"}
 
 # Regex patterns for literals
 literal_rules = [
-    r"\s-?[0-9]+\s",           # Integer literals
-    r"\s-?[0-9]*\.[0-9]+?\s", # Floating-point literals
+    r"\s-?[0-9]*\.[0-9]+", # Floating-point literals
+    r"\s-?[0-9]+",           # Integer literals
     r'\s\".*\"',               # String literals
     r"(WIN|FAIL)\s",           # Boolean literals
-    r"\s(TROOF|NOOB|NUMBR|NUMBAR|YARN|TYPE)\s"  # Type literals
+    r"(TROOF|NOOB|NUMBR|NUMBAR|YARN|TYPE)\s"  # Type literals
 ]
 
 # Regex pattern for identifiers
@@ -68,7 +68,7 @@ code_line = []
 def tokenize_line(line, lexemes, all_tokens, line_cnt):
     # Track positions of found keywords and literals to exclude them from identifier checks
     positions = {"keywords": [], "literals": [], "identifiers": []}
-    literaltype_arr = ["NUMBR", "NUMBAR", "YARN", "TROOF"]
+    literaltype_arr = ["NUMBAR", "NUMBR", "YARN", "TROOF"]
     # Define patterns for detecting variable, function, and loop identifiers
     variable_keywords = ["I HAS A", "I HAS", "GIMMEH", "MAEK", "YR","VISIBLE"]
     
@@ -140,28 +140,26 @@ def tokenize_line(line, lexemes, all_tokens, line_cnt):
     # Identify literals
     literalrule_index = 0
     for rule in literal_rules:
+        
         literals = re.finditer(rule, line)
+        print(rule)
         for literal in literals:
+            print(literal)
             if not is_within_positions(literal.span(), positions["keywords"]) :
                 lexeme = literal.group().strip()
+                # print(lexeme)
                 lexemes["literals"].append(lexeme)
-                if literalrule_index in range(0, 4):
-                    all_tokens.append({
-                        "token": lexeme,
-                        "type": literaltype_arr[literalrule_index],
-                        "line": line_cnt,
-                        "start": literal.start(),
-                        "end": literal.end()
-                    })
-                else:
-                    all_tokens.append({
-                        "token": lexeme,
-                        "type": "Literal",
-                        "line": line_cnt,
-                        "start": literal.start(),
-                        "end": literal.end()
-                    })
+                all_tokens.append({
+                    "token": lexeme,
+                    "type": literaltype_arr[literalrule_index],
+                    "line": line_cnt,
+                    "start": literal.start(),
+                    "end": literal.end()
+                })
                 positions["literals"].append(literal.span())
+                line = line[0:literal.span()[0]] + line[literal.span()[1]:]
+            else:
+                print(positions['keywords'])
         literalrule_index+=1
     # print(lexemes['literals'])
     # Identify identifiers
@@ -236,6 +234,7 @@ def tokenize_line(line, lexemes, all_tokens, line_cnt):
                 "end": text.end()
                 })
             else:
+                # print(lexeme)
                 lexemes.setdefault("errors", []).append(lexeme)
                 all_tokens.append({
                     "token": lexeme,
