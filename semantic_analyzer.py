@@ -107,7 +107,9 @@ class SemanticAnalyzer:
             else:
                 self.raise_semantic_error(token, f'Variable {token['token']} should be declared.')
         # Further checks could be added here for specific types of tokens
-
+        elif token_type == 'Control Flow' and token_value == 'O RLY?':
+            next_token = self.getnext()
+            self.execute_if_else(self.current_index)
 
 
     def execute_switch(self, index):
@@ -366,6 +368,8 @@ class SemanticAnalyzer:
             self.execute_math(index, [])
         elif token['token'] == "GIMMEH":
             self.execute_input()
+        elif token['type'] == 'Control Flow':
+                self.execute_if_else(index)
 
 
     def execute_function(self, function_name, function_index):
@@ -488,6 +492,57 @@ class SemanticAnalyzer:
         # print(math_stack)
         self.IT = math_stack[0]
 
+    def execute_if_else(self, index):
+        """Executes an if-else construct"""
+        current_index = index
+        current_token = self.all_tokens[current_index]
+        next_token = self.getnext()
+        self.IT = 'FAIL'
+        decision = None # Stores the result of the evaluation of the condition
+
+        if self.IT == 'WIN': # If true
+            decision = 'YA RLY'
+        elif self.IT == "FAIL": # If false
+            decision = 'NO WAI'
+        else:
+            self.raise_semantic_error(current_token, "Condition evaluation failed. 'IT' should be 'WIN' or 'FAIL'")
+
+        # Move to the selected block
+        while current_index < len(self.all_tokens):
+            current_token = self.all_tokens[current_index]
+            if current_token['token'] == decision:
+                current_index += 1
+                break
+            current_index += 1
+
+        # Execute the current block
+        while current_index < len(self.all_tokens):
+            current_token = self.all_tokens[current_index]
+            if current_token['token'] == 'OIC':
+                break
+            self.execute_statement(current_token, current_index)
+            current_index += 1
+
+    # def evaluate_condition(self, token):
+    #     if token['type'] == 'TROOF':
+    #         return token['token'] == 'WIN'
+    #     elif token['type'] in ['NUMBR', 'NUMBAR']:
+    #         # True if non-zero numbers
+    #         return float(token['token']) != 0
+    #     elif token['type'] == 'YARN':
+    #         # True if non-empty strings
+    #         return len(token['token'].strip('"')) > 0
+    #     elif token['type'] == 'Variable':
+    #         if token['token'] in self.symbol_table:
+    #             variable = self.symbol_table[token['token']]
+    #             if variable['initialized']:
+    #                 return self.evaluate_condition({'type': variable['type'], 'token': str(variable['value'])})
+    #             else:
+    #                 self.raise_semantic_error(token, f"Variable '{token['token']}' is not initialized")
+    #         else:
+    #             self.raise_semantic_error(token, f"Variable '{token['token']}' is not declared")
+    #     elif token['type'] == 'Logical Operator':
+    #         operator = token['token']
 
     def visible(self, index):
         next_token = self.all_tokens[index+1]
