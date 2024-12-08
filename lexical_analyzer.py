@@ -53,9 +53,9 @@ comments = {"BTW", "OBTW", "TLDR"}
 
 # Regex patterns for literals
 literal_rules = [
+    r'"([^"]*)"',               # String literals
     r"\s-?[0-9]*\.[0-9]+", # Floating-point literals
     r"\s-?[0-9]+",           # Integer literals
-    r'\s\".*\"',               # String literals
     r"(WIN|FAIL)\s",           # Boolean literals
     r"(TROOF|NOOB|NUMBR|NUMBAR|YARN|TYPE)\s"  # Type literals
 ]
@@ -68,7 +68,7 @@ code_line = []
 def tokenize_line(line, lexemes, all_tokens, line_cnt):
     # Track positions of found keywords and literals to exclude them from identifier checks
     positions = {"keywords": [], "literals": [], "identifiers": []}
-    literaltype_arr = ["NUMBAR", "NUMBR", "YARN", "TROOF"]
+    literaltype_arr = [ "YARN","NUMBAR", "NUMBR", "TROOF", "LITERAL"]
     # Define patterns for detecting variable, function, and loop identifiers
     variable_keywords = ["I HAS A", "I HAS", "GIMMEH", "MAEK", "YR","VISIBLE"]
     
@@ -232,7 +232,7 @@ def tokenize_line(line, lexemes, all_tokens, line_cnt):
             positions["identifiers"].append(identifier.span())
 
     # Identify errors (unclassified tokens)
-    remaining_text = re.finditer(r"\S+", line)
+    remaining_text = re.finditer(r"\+", line)
     for text in remaining_text:
         if not (is_within_positions(text.span(), positions["keywords"]) or
                 is_within_positions(text.span(), positions["literals"]) or
@@ -247,7 +247,6 @@ def tokenize_line(line, lexemes, all_tokens, line_cnt):
                 "end": text.end()
                 })
             else:
-                # print(lexeme)
                 lexemes.setdefault("errors", []).append(lexeme)
                 all_tokens.append({
                     "token": lexeme,
