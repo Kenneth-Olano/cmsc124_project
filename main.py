@@ -133,7 +133,11 @@ class LOLcodeApp:
             symbol_table = semantic_analyzer.get_symbol_table()
 
             for var, info in symbol_table.items():
-                self.symbol_table_treeview.insert("", "end", values=(var, info['value']))
+                # Ensure the value exists and insert it into the TreeView
+                if isinstance(info, dict) and 'value' in info:
+                    self.symbol_table_treeview.insert("", "end", values=(var, info['value']))
+                else:
+                    print(f"Skipping variable '{var}' with unexpected structure: {info}")
 
             # Output to console
             self.console_text.config(state=tk.NORMAL)
