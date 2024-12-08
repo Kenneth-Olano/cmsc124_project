@@ -20,6 +20,10 @@ class SemanticAnalyzer:
         self.current_token = self.all_tokens[self.current_index] if self.all_tokens else None
         self.IT = None
 
+    def get_symbol_table(self):
+        """Method to get the current symbol table."""
+        return self.symbol_table
+
     def getnext(self):
         """Advance the token pointer to the next token."""
         return self.all_tokens[self.current_index+1] if self.current_index < len(self.all_tokens) else None

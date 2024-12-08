@@ -1,5 +1,4 @@
 import tkinter as tk
-import traceback
 from tkinter import filedialog, messagebox, ttk
 from lexical_analyzer import analyze_code  # Import the lexical analysis function
 from syntax_analyzer import SyntaxAnalyzer
@@ -32,7 +31,7 @@ class LOLcodeApp:
         top_frame.grid_columnconfigure(1, weight=1)
         top_frame.grid_columnconfigure(2, weight=1)
         top_frame.grid_columnconfigure(3, weight=1)
-        
+
         top_frame.grid_rowconfigure(0, weight=0)  # Row for file selector
         top_frame.grid_rowconfigure(1, weight=1)  # Row for text editor, tokens, symbol table
 
@@ -53,7 +52,7 @@ class LOLcodeApp:
         self.tokens_frame.grid(row=1, column=2, padx=0, pady=0, sticky="nsew")
         self.tokens_label = tk.Label(self.tokens_frame, text="List of Tokens:", font=("Helvetica", 12))
         self.tokens_label.pack(pady=5)
-        
+
         self.tokens_treeview = ttk.Treeview(self.tokens_frame, columns=("Lexeme", "Classification"), show="headings")
         self.tokens_treeview.heading("Lexeme", text="Lexeme")
         self.tokens_treeview.heading("Classification", text="Classification")
@@ -61,13 +60,19 @@ class LOLcodeApp:
         self.tokens_treeview.column("Classification", width=150)
         self.tokens_treeview.pack(fill="both", expand=True)
 
-        # Symbol Table (with border)
+        # Symbol Table (with border, using Treeview)
         self.symbol_table_frame = tk.Frame(top_frame, borderwidth=2, relief="solid", bg="gray")
         self.symbol_table_frame.grid(row=1, column=3, padx=0, pady=0, sticky="nsew")
         self.symbol_table_label = tk.Label(self.symbol_table_frame, text="Symbol Table:", font=("Helvetica", 12))
         self.symbol_table_label.pack(pady=5)
-        self.symbol_table_listbox = tk.Listbox(self.symbol_table_frame, height=15, width=30, font=("Arial", 12))
-        self.symbol_table_listbox.pack(fill="both", expand=True)
+
+        self.symbol_table_treeview = ttk.Treeview(self.symbol_table_frame, columns=("Variable Name", "Value"), show="headings")
+        self.symbol_table_treeview.heading("Variable Name", text="Variable Name")
+        self.symbol_table_treeview.heading("Value", text="Value")
+        self.symbol_table_treeview.column("Variable Name", width=150)
+        self.symbol_table_treeview.column("Value", width=150)
+        self.symbol_table_treeview.pack(fill="both", expand=True)
+
 
     def create_run_button(self):
         # Frame for the run button
@@ -104,7 +109,7 @@ class LOLcodeApp:
 
         # Clear the tokens and symbol table
         self.tokens_treeview.delete(*self.tokens_treeview.get_children())
-        self.symbol_table_listbox.delete(0, tk.END)
+        self.symbol_table_treeview.delete(*self.symbol_table_treeview.get_children())
         self.console_text.config(state=tk.NORMAL)
         self.console_text.delete(1.0, tk.END)  # Clear previous output
         self.console_text.config(state=tk.DISABLED)
@@ -118,25 +123,27 @@ class LOLcodeApp:
                 print(f"Inserting token: {token['token']} with type: {token['type']}")  # Debugging line
                 self.tokens_treeview.insert("", "end", values=(token['token'], token['type']))
 
-            # Example Symbol Table (can be updated to real data)
-            symbol_table = {"var1": 10, "var2": 20}  # Example symbol table
-            for var, value in symbol_table.items():
-                self.symbol_table_listbox.insert(tk.END, f"{var}: {value}")
+            # Syntax and Semantic Analysis
+            syntax_analyzer = SyntaxAnalyzer(all_tokens)
+            func_dict = syntax_analyzer.parse_program()
+            semantic_analyzer = SemanticAnalyzer(all_tokens, func_dict)
+            semantic_analyzer.analyze()
+
+            # Get symbol table from the semantic analyzer and display it
+            symbol_table = semantic_analyzer.get_symbol_table()
+
+            for var, info in symbol_table.items():
+                self.symbol_table_treeview.insert("", "end", values=(var, info['value']))
+
 
             # Output to console
             self.console_text.config(state=tk.NORMAL)
             self.console_text.insert(tk.END, "Code executed successfully!\n")
             self.console_text.config(state=tk.DISABLED)
 
-            # Syntax and Semantic Analysis (dummy for the moment)
-            syntax_analyzer = SyntaxAnalyzer(all_tokens)
-            func_dict = syntax_analyzer.parse_program()
-            semantic_analyzer = SemanticAnalyzer(all_tokens, func_dict)
-            semantic_analyzer.analyze()
-
         except Exception as e:
-            print(traceback.format_exc())
             messagebox.showerror("Error", f"An error occurred while running the code: {e}")
+
 
 root = tk.Tk()
 app = LOLcodeApp(root)
