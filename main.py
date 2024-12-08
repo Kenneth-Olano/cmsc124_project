@@ -116,11 +116,10 @@ class LOLcodeApp:
 
         try:
             # Lexical Analysis
-            lexemes, all_tokens = analyze_code(code)
+            all_tokens = analyze_code(code)
 
             # Display tokens in the treeview
             for token in all_tokens:
-                print(f"Inserting token: {token['token']} with type: {token['type']}")  # Debugging line
                 self.tokens_treeview.insert("", "end", values=(token['token'], token['type']))
 
             # Syntax and Semantic Analysis

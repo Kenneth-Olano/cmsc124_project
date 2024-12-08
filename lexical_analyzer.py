@@ -72,6 +72,19 @@ def tokenize_line(line, lexemes, all_tokens, line_cnt):
     # Define patterns for detecting variable, function, and loop identifiers
     variable_keywords = ["I HAS A", "I HAS", "GIMMEH", "MAEK", "YR","VISIBLE"]
     
+    btw_match = re.search(r"\bBTW\b", line)
+    if btw_match:
+        # Everything after 'BTW' is a comment
+        comment_text = line[btw_match.start():].strip()
+        lexemes["comments"].append(comment_text)
+        all_tokens.append({
+            "token": comment_text,
+            "type": "Comment",
+            "line": line_cnt,
+            "start": btw_match.start(),
+            "end": len(line)
+        })
+        line = line[:btw_match.start()]  # Remove comment from the line for further processing
 
     # Identify keywords
     keywords = re.finditer(r"\b(?:{})\b".format("|".join(map(re.escape, constructs)).replace("?", r"\?")), line)
@@ -251,7 +264,7 @@ def is_within_positions(span, positions):
     return False
 
 def analyze_code(code):
-    lexemes = {"keywords": [], "literals": [], "identifiers": []}
+    lexemes = {"keywords": [], "literals": [], "identifiers": [], "comments": []}
     all_tokens = []
     line_cnt = 1
 
@@ -263,6 +276,5 @@ def analyze_code(code):
     # After tokenization, sort all tokens by their start position to ensure correct order
     all_tokens.sort(key=lambda x: (x['line'], x['start']))
 
-    return lexemes, all_tokens
-
+    return all_tokens
 

@@ -15,7 +15,13 @@ class SyntaxAnalyzer:
             self.tokens[self.current_index] if self.current_index < len(self.tokens) else None
         )
 
+    def skip_comment(self):
+        """Skip any comments encountered during parsing."""
+        while self.current_token and self.current_token["type"] == "Comment":
+            self.advance()
+
     def match(self, token_type, expected_token=None):
+        self.skip_comment()
         """Check if the current token matches the expected type and optional specific token."""
         if self.current_token and self.current_token["type"] == token_type:
             if expected_token and self.current_token["token"] != expected_token:
@@ -92,8 +98,6 @@ class SyntaxAnalyzer:
             self.parse_function_call()
         elif token_type == "Typecast" and token_type == "MAEK":
             self.parse_exp_typecast()
-        # elif token_type == "Comment":
-
         else:
             self.raise_error("a valid statement")
 
