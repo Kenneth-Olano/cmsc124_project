@@ -61,7 +61,7 @@ class SyntaxAnalyzer:
         while self.current_token and self.current_token["token"] != "KTHXBYE":
             self.parse_toplevel()  # Parse statements within the program
         self.match("Program Delimiter", "KTHXBYE")  # End of the program
-        return self.function_dict
+        return self.function_dict, self.tokens
 
     def parse_toplevel(self):
         self.skip_comment()
@@ -332,15 +332,24 @@ class SyntaxAnalyzer:
         self.skip_comment()
         """Parse loop constructs."""
         self.match("Loop Delimiter", "IM IN YR")
+        if self.current_token['type'] == "Variable":
+            self.tokens[self.current_index]['type'] = "Loop"
+            # print(self.tokens)
         self.parse_identifier()
         self.parse_loopop()
         self.parse_connector("YR")
+        if self.current_token['type'] == "Variable":
+            self.tokens[self.current_index]['type'] = "Loop"
+            # print(self.tokens)
         self.parse_identifier()
         self.parse_looptype()
         self.parse_logicop()
         while self.current_token and self.current_token["token"] != "IM OUTTA YR":
             self.parse_statement()
         self.match("Loop Delimiter", "IM OUTTA YR")
+        if self.current_token['type'] == "Variable":
+            self.tokens[self.current_index]['type'] = "Loop"
+            # print(self.tokens)
         self.parse_identifier()
 
     def parse_print(self):

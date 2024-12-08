@@ -125,7 +125,7 @@ class LOLcodeApp:
 
             # Syntax and Semantic Analysis
             syntax_analyzer = SyntaxAnalyzer(all_tokens, self.console_text)
-            func_dict = syntax_analyzer.parse_program()
+            func_dict, all_tokens = syntax_analyzer.parse_program()
             semantic_analyzer = SemanticAnalyzer(all_tokens, func_dict, self.console_text)
             semantic_analyzer.analyze()
 
@@ -133,8 +133,11 @@ class LOLcodeApp:
             symbol_table = semantic_analyzer.get_symbol_table()
 
             for var, info in symbol_table.items():
-                self.symbol_table_treeview.insert("", "end", values=(var, info['value']))
-
+                # Ensure the value exists and insert it into the TreeView
+                if isinstance(info, dict) and 'value' in info:
+                    self.symbol_table_treeview.insert("", "end", values=(var, info['value']))
+                else:
+                    print(f"Skipping variable '{var}' with unexpected structure: {info}")
 
             # Output to console
             self.console_text.config(state=tk.NORMAL)
