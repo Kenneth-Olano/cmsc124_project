@@ -123,7 +123,7 @@ class LOLcodeApp:
                 self.tokens_treeview.insert("", "end", values=(token['token'], token['type']))
 
             # Syntax and Semantic Analysis
-            syntax_analyzer = SyntaxAnalyzer(all_tokens)
+            syntax_analyzer = SyntaxAnalyzer(all_tokens, self.console_text)
             func_dict = syntax_analyzer.parse_program()
             semantic_analyzer = SemanticAnalyzer(all_tokens, func_dict)
             semantic_analyzer.analyze()
