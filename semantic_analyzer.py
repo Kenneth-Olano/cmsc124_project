@@ -64,14 +64,15 @@ class SemanticAnalyzer:
         elif (token_type == 'Data Declaration' and token_value == "ITZ"):
             # Check if it's a variable declaration like "I HAS A"
             self.assignval_tovar(token)
-
+        elif token_value == "GIMMEH":
+            self.execute_input()
         elif (token_type == 'Mathematical Operator'):
             # Check if it's a variable declaration like "I HAS A"
             next_token = self.getnext()
             self.math_checktype(token)
             self.execute_math(self.current_index, [])
-        # elif (token_type == 'Input/Output') and token_value == 'VISIBLE':
-        #     self.visible()
+        elif (token_type == 'Input/Output') and token_value == 'VISIBLE':
+            self.visible(self.current_index)
 
         elif token_type == 'Assignment Operator' and token_value == "R":
             # Check if the assignment is to a valid variable
@@ -93,6 +94,31 @@ class SemanticAnalyzer:
         #     self.handle_loop_scope(token)
         
         # Further checks could be added here for specific types of tokens
+
+    def execute_input(self):
+        variable = self.getnext()
+        if variable['token'] in self.symbol_table:
+            new_value = input()
+            self.symbol_table[variable['token']]['initialized'] = True
+
+            try:
+                if new_value == "WIN" or new_value == "FAIL":
+                    self.symbol_table[variable['token']]['value'] = new_value
+                    self.symbol_table[variable['token']]['type'] = "TROOF"
+                elif new_value.count('.') == 1:
+                    self.symbol_table[variable['token']]['value'] = float(new_value)
+                    self.symbol_table[variable['token']]['type'] = "NUMBAR"
+                elif new_value.count('.') == 0:
+                    self.symbol_table[variable['token']]['value'] = int(new_value)
+                    self.symbol_table[variable['token']]['type'] = "NUMBR"
+            except: 
+                self.symbol_table[variable['token']]['value'] = f'"{new_value}"'
+                self.symbol_table[variable['token']]['type'] = "YARN"
+                
+            # print(self.symbol_table)
+        else:
+            self.raise_semantic_error(variable, f"Variable {variable['token']} not declared.")
+
     def math_checktype(self, token):
         value = token
         value_index = self.current_index
@@ -179,7 +205,7 @@ class SemanticAnalyzer:
                     self.symbol_table[variable]['type'] = "NUMBAR"
                 
                 self.symbol_table[variable]['value'] = self.IT
-        print(self.symbol_table)
+        # print(self.symbol_table)
 
     def check_variable_assignment(self, token):
         next_token = self.getnext()
@@ -364,7 +390,7 @@ class SemanticAnalyzer:
                     math_stack.append(max(a,b))
                 elif (op == '<'):
                     math_stack.append(min(a,b))
-                print(math_stack)
+                # print(math_stack)
             current_index +=1
             current_token = self.all_tokens[current_index]
             if current_index == len(self.all_tokens)-1:
@@ -391,12 +417,13 @@ class SemanticAnalyzer:
                 math_stack.append(max(a,b))
             elif (op == '<'):
                 math_stack.append(min(a,b))
-        print(math_stack)
+        # print(math_stack)
         self.IT = math_stack[0]
 
 
     def visible(self, index):
         next_token = self.all_tokens[index+1]
+        # print(next_token['token'])
         if next_token['type'] in ["NUMBR", "NUMBAR", "YARN", "TROOF"]:
             if next_token['type'] == "YARN":
                 self.IT = next_token['token'][1:len(next['token'])]

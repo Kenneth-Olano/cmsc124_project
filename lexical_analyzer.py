@@ -155,9 +155,9 @@ def tokenize_line(line, lexemes, all_tokens, line_cnt):
     for rule in literal_rules:
         
         literals = re.finditer(rule, line)
-        print(rule)
+        # print(rule)
         for literal in literals:
-            print(literal)
+            # print(literal)
             if not is_within_positions(literal.span(), positions["keywords"]) :
                 lexeme = literal.group().strip()
                 # print(lexeme)
