@@ -253,7 +253,7 @@ class SemanticAnalyzer:
                 else:
                     self.raise_semantic_error(token, f"Variable {token['token']} should be declared.")
         return None
-def execute_comparison(self, index, is_equality):
+    def execute_comparison(self, index, is_equality):
         """
         Executes comparison and relational operations.
         Handles BOTH SAEM, DIFFRINT, BIGGR OF, and SMALLR OF.
