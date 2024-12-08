@@ -145,20 +145,48 @@ def tokenize_line(line, lexemes, all_tokens, line_cnt):
     # Identify identifiers
     identifiers = re.finditer(identifier_rule, line)
     for identifier in identifiers:
-        start, end = identifier.span()
-        if not is_within_positions((start, end), positions):
-            identifier_text = identifier.group().strip()
-            if identifier_text not in constructs:
-                identifier_type = classify_identifier(identifier_text, line[:start])
-                lexemes["identifiers"].append(identifier_text)
-                all_tokens.append({
-                    "token": identifier_text,
-                    "type": identifier_type,
-                    "line": line_cnt,
-                    "start": start,
-                    "end": end
-                })
-                positions.append((start, end))
+        identifier_text = identifier.group().strip()
+        if (identifier_text not in constructs and
+                not is_within_positions(identifier.span(), positions)):
+            
+            # Heuristic-based classification of the identifier
+            identifier_type = "Variable"  # Default classification
+
+            for keyword in function_keywords:
+                if keyword in line[:identifier.start()]:  # Check if keyword precedes the identifier
+                    function_line = line[:identifier.start()].split()
+                    if function_line[len(function_line)-1] == "YR":
+                        identifier_type = "Function Parameter"
+                    else:
+                        identifier_type = "Function"
+                    break
+                
+            for keyword in function_call:
+                if keyword in line[:identifier.start()]:  # Check if keyword precedes the identifier
+                    function_line = line[:identifier.start()].split()
+                    if function_line[len(function_line)-1] == "YR":
+                        # identifier_type = "Function Parameter"
+                        pass
+                    elif function_line[len(function_line)-1] == "IZ":
+                        identifier_type = "Function"
+                    break
+
+            # Check if the identifier is part of a loop (e.g., "IM IN YR")
+            for keyword in loop_keywords:
+                if keyword in line[:identifier.start()] and len(positions)==0:  # Check if keyword precedes the identifier
+                    identifier_type = "Loop"
+                    break
+
+            lexemes["identifiers"].append(identifier_text)
+            all_tokens.append({
+                "token": identifier_text,
+                "type": identifier_type,
+                "line": line_cnt,
+                "start": identifier.start(),
+                "end": identifier.end()
+            })
+            positions.append(identifier.span())
+
 
     # Identify unclassified tokens (errors)
     remaining_text = re.finditer(r"\S+", line)
