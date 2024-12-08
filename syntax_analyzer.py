@@ -102,10 +102,9 @@ class SyntaxAnalyzer:
         self.match("Data Declaration", "I HAS A")  # Match the "I HAS A" keyword
         self.parse_identifier()  # Expect a Variable identifier
         if self.current_token and self.current_token["token"] == "ITZ":
-            self.advance()
-            # self.match("Data Declaration", "ITZ")
+            # self.advance()
+            self.match("Data Declaration", "ITZ")
             self.parse_value()
-
     def parse_control_flow(self):
         self.match("Control Flow", "O RLY?")
         self.match("Control Flow", "YA RLY")
@@ -142,13 +141,11 @@ class SyntaxAnalyzer:
     def parse_identifier(self):
         """Parse the <identifier> rule."""
         if self.current_token and self.current_token["type"] == "Variable":
-            # self.advance()
+            self.advance()
             if self.current_token["type"] == "Typecast":
                 self.parse_imp_typecast()
             elif self.current_token["type"] == "Assignment Operator":
                 self.parse_variable_assignment()
-            else:
-                self.advance()
         elif self.current_token and self.current_token["type"] == "Loop":
             self.advance()
         elif self.current_token and self.current_token["type"] == "Function":

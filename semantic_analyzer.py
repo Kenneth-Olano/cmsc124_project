@@ -60,6 +60,7 @@ class SemanticAnalyzer:
         elif (token_type == 'Data Declaration' and token_value == "ITZ"):
             # Check if it's a variable declaration like "I HAS A"
             self.assignval_tovar(token)
+
         elif (token_type == 'Mathematical Operator'):
             # Check if it's a variable declaration like "I HAS A"
             next_token = self.getnext()
@@ -120,6 +121,8 @@ class SemanticAnalyzer:
                             troof_to_int = 0
                     else:
                         self.raise_semantic_error(token, f'Variable {value['token']} should be type NUMBR or NUMBAR.')
+                elif value['token'] in self.symbol_table.keys() and self.symbol_table[value['token']]['initialized'] == False:
+                    self.raise_semantic_error(value, f'Variable {value['token']} should be initialized.')
             elif value['type'] == "YARN":
                 try:
                     yarn = value['token'][1:len(value['token'])-1]
@@ -170,6 +173,7 @@ class SemanticAnalyzer:
                     self.symbol_table[variable]['type'] = "NUMBR"
                 elif type(self.IT) == float:
                     self.symbol_table[variable]['type'] = "NUMBAR"
+                
                 self.symbol_table[variable]['value'] = self.IT
         print(self.symbol_table)
 
@@ -315,11 +319,12 @@ class SemanticAnalyzer:
                     except:
                         self.raise_semantic_error(current_token, f'Literal {current_token['token']} should be type NUMBR or NUMBAR.')
             elif current_token['type'] == "Variable":
-                if current_token['type'] in self.symbol_table and self.symbol_table[current_token['token']]['initialized'] == True:
+                if current_token['token'] in self.symbol_table and (self.symbol_table[current_token['token']])['initialized'] == True:
+                    # print(current_token['token'])
                     if type(self.symbol_table[current_token['token']]['value']) == int:
-                        math_stack.append(int(current_token['token']))
+                        math_stack.append(self.symbol_table[current_token['token']]['value'])
                     elif type(self.symbol_table[current_token['token']]['value']) == float:
-                        math_stack.append(float(current_token['token']))
+                        math_stack.append(self.symbol_table[current_token['token']]['value'])
                     elif type(self.symbol_table[current_token['token']]['value']) == str:
                         if self.symbol_table[current_token['token']]['value'] == "WIN": 
                             math_stack.append(1)
@@ -355,8 +360,11 @@ class SemanticAnalyzer:
                     math_stack.append(max(a,b))
                 elif (op == '<'):
                     math_stack.append(min(a,b))
+                print(math_stack)
             current_index +=1
             current_token = self.all_tokens[current_index]
+            if current_index == len(self.all_tokens)-1:
+                break
             next_token = self.all_tokens[current_index+1]
             current_line = current_token['line']
             next_line = next_token['line']
@@ -379,6 +387,7 @@ class SemanticAnalyzer:
                 math_stack.append(max(a,b))
             elif (op == '<'):
                 math_stack.append(min(a,b))
+        print(math_stack)
         self.IT = math_stack[0]
 
 

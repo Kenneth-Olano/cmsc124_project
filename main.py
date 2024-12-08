@@ -1,4 +1,5 @@
 import tkinter as tk
+import traceback
 from tkinter import filedialog, messagebox, ttk
 from lexical_analyzer import analyze_code  # Import the lexical analysis function
 from syntax_analyzer import SyntaxAnalyzer
@@ -134,6 +135,7 @@ class LOLcodeApp:
             semantic_analyzer.analyze()
 
         except Exception as e:
+            print(traceback.format_exc())
             messagebox.showerror("Error", f"An error occurred while running the code: {e}")
 
 root = tk.Tk()
