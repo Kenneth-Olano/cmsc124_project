@@ -32,13 +32,13 @@ class SyntaxAnalyzer:
         if self.current_token and self.current_token["type"] == token_type:
             if expected_token and self.current_token["token"] != expected_token:
                 self.raise_error(f"'{expected_token}'")
-            self.advance()
+            else:
+                self.advance()
         else:
             self.raise_error(token_type)
 
     def raise_error(self, expected):
         """Raise a detailed syntax error with token information."""
-        error_message = ""
         if self.current_token:
             error_message = (
                 f"Syntax Error: Expected {expected} but found '{self.current_token['token']}' "
@@ -51,6 +51,10 @@ class SyntaxAnalyzer:
         # Log the error message to the console
         self.log_to_console(error_message)
 
+        # Stop parsing by raising an exception
+        raise Exception(error_message)
+
+
     def parse_program(self):
         """Parse the <program> rule."""
         self.match("Program Delimiter", "HAI")  # Start of the program
@@ -60,6 +64,7 @@ class SyntaxAnalyzer:
         return self.function_dict
 
     def parse_toplevel(self):
+        self.skip_comment()
         """Parse the <toplevel> rule."""
         if not self.current_token:
             return
@@ -81,6 +86,7 @@ class SyntaxAnalyzer:
             self.parse_statement()
         
     def parse_statement(self):
+        self.skip_comment()
         """Parse the <statement> rule."""
         if not self.current_token:
             return
@@ -110,6 +116,7 @@ class SyntaxAnalyzer:
             self.raise_error("a valid statement")
 
     def parse_declaration(self):
+        self.skip_comment()
         """Parse the <declaration> rule."""
         self.match("Data Declaration", "I HAS A")  # Match the "I HAS A" keyword
         self.parse_identifier()  # Expect a Variable identifier
@@ -151,6 +158,7 @@ class SyntaxAnalyzer:
         #self.match("Data Initialization", "BUHBYE")
 
     def parse_identifier(self):
+        self.skip_comment()
         """Parse the <identifier> rule."""
         if self.current_token and self.current_token["type"] == "Variable":
             self.advance()
@@ -166,15 +174,18 @@ class SyntaxAnalyzer:
             self.raise_error("Identifier")
 
     def parse_imp_typecast(self):
+        self.skip_comment()
         self.match("Typecast", "IS NOW A")
         self.match("Literal")
 
     def parse_exp_typecast(self):
+        self.skip_comment()
         self.match("Typecast", "MAEK")
         self.match("Variable")
         self.match("Literal")
 
     def parse_value(self):
+        self.skip_comment()
         """Parse the <value> rule."""
         if self.current_token and self.current_token["type"] in ["Typecast", "Concatenate", "Logical Operator", "NUMBR", "NUMBAR", "YARN", "TROOF", "Literal", "Variable" ,"Identifier", "Mathematical Operator"]:
             
@@ -194,11 +205,13 @@ class SyntaxAnalyzer:
             self.raise_error("Literal or Identifier")
     
     def parse_connector(self, connector):
+        self.skip_comment()
         self.match("Connector", connector)
         return True
         
 
     def parse_mathop(self):
+        self.skip_comment()
         try:
             self.match("Mathematical Operator")
             self.parse_value()
@@ -210,16 +223,19 @@ class SyntaxAnalyzer:
         
 
     def parse_variable_assignment(self):
+        self.skip_comment()
         """Parse variable assignment statements."""  # The variable being assigned
         self.match("Assignment Operator", "R")  # The assignment operator
         self.parse_value()  # The value or expression being assigned
 
     def parse_input(self):
+        self.skip_comment()
         """Parse the <input> rule for GIMMEH."""
         self.match("Input/Output", "GIMMEH")  # Match the GIMMEH keyword
         self.parse_identifier()  # Expect an identifier to store the input
 
     def parse_function_call(self):
+        self.skip_comment()
         """Parse function call statements."""
         self.match("Function Call")
         self.match("Function")
@@ -235,6 +251,7 @@ class SyntaxAnalyzer:
             self.raise_error("'MKAY' after function call")
 
     def parse_function(self):
+        self.skip_comment()
         """Parse function constructs."""
         self.match("Function Delimiter", "HOW IZ I")
 
@@ -287,18 +304,21 @@ class SyntaxAnalyzer:
         self.match("Function Delimiter", "IF U SAY SO")
         
     def parse_loopop(self):
+        self.skip_comment()
         try:
             self.match("Loop Operator")
         except SyntaxError as e:
             self.raise_error("Loop Operator")
 
     def parse_looptype(self):
+        self.skip_comment()
         try:
             self.match("Loop Type")
         except SyntaxError as e:
             self.raise_error("Loop Type")
 
     def parse_logicop(self):
+        self.skip_comment()
         try:
             self.match("Logical Operator")
             self.parse_value()
@@ -308,6 +328,7 @@ class SyntaxAnalyzer:
             self.raise_error("a valid logic operation")
 
     def parse_loop(self):
+        self.skip_comment()
         """Parse loop constructs."""
         self.match("Loop Delimiter", "IM IN YR")
         self.parse_identifier()
@@ -322,6 +343,7 @@ class SyntaxAnalyzer:
         self.parse_identifier()
 
     def parse_print(self):
+        self.skip_comment()
         """Parse the <print> rule."""
         current_line = self.current_token["line"]
         self.match("Input/Output", "VISIBLE")
@@ -346,6 +368,7 @@ class SyntaxAnalyzer:
                 self.raise_error("Valid print connector")
 
     def parse_concatenate(self):
+        self.skip_comment()
         self.match("Concatenate", "SMOOSH")
         current_line = self.current_token["line"]
         while current_line == self.current_token["line"] and self.current_token["type"] in ["YARN", "Variable"]:
@@ -356,6 +379,7 @@ class SyntaxAnalyzer:
                 break
 
     def parse_initialization(self):
+        self.skip_comment()
         """Parse the <control_flow> rule."""
         if self.current_token["token"] == "WAZZUP":
             self.match("Data Initialization", "WAZZUP")
@@ -369,9 +393,10 @@ class SyntaxAnalyzer:
         """Start the parsing process."""
         try:
             self.parse_program()
-            print("Parsing successful!")
-        except SyntaxError as e:
-            print(e)
+            self.log_to_console("Parsing successful!")
+        except Exception as e:
+            # Log any unexpected errors
+            self.log_to_console(f"Unexpected error: {e}")
 
 
     
