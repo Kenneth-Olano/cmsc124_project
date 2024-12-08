@@ -129,6 +129,7 @@ def get_file():
         b.analyze()
         # syntax_analyzer.syntax_analyzer(all_tokens)  # Pass tokens to the syntax analyzer
     except Exception as e:
+        print(e)
         messagebox.showerror("Error", f"An error occurred while reading the file:\n{e}")
 
 def tokenize_line(line, lexemes, all_tokens, line_cnt):
@@ -263,7 +264,6 @@ def tokenize_line(line, lexemes, all_tokens, line_cnt):
             for keyword in function_call:
                 if keyword in line[:identifier.start()]:  # Check if keyword precedes the identifier
                     function_line = line[:identifier.start()].split()
-                    print(function_line[len(function_line)-1])
                     if function_line[len(function_line)-1] == "YR":
                         # identifier_type = "Function Parameter"
                         pass
@@ -295,7 +295,6 @@ def tokenize_line(line, lexemes, all_tokens, line_cnt):
                 is_within_positions(text.span(), positions["identifiers"])):  # Unclassified token
             lexeme = text.group().strip()
             if lexeme == "+":
-                print(lexeme)
                 all_tokens.append({
                 "token": lexeme,
                 "type": "Concatenate",

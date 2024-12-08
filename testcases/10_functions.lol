@@ -5,18 +5,20 @@ HAI
     IF U SAY SO
 
     HOW IZ I printName YR person
-        VISIBLE "Hello, " + person
+        VISIBLE person
         GTFO
     IF U SAY SO
 
     HOW IZ I printNum YR x
-        FOUND YR x
+        VISIBLE SUM OF PRODUKT OF 3 AN 5 AN BIGGR OF DIFF OF 17 AN 2 AN 5
+        VISIBLE x
+        GTFO
     IF U SAY SO
 
     WAZZUP
-        I HAS A name
-        I HAS A num1
-        I HAS A num2
+        I HAS A name ITZ "KEN"
+        I HAS A num1 ITZ BIGGR OF PRODUKT OF 11 AN 2 AN QUOSHUNT OF SUM OF 3 AN 5 AN 2
+        I HAS A num2 ITZ 2
     BUHBYE
 
     GIMMEH num1
