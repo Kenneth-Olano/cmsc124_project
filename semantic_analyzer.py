@@ -1,4 +1,4 @@
-from tkinter import filedialog, messagebox, ttk
+from tkinter import simpledialog, messagebox
 import tkinter as tk
 
 constructs = set([
@@ -104,10 +104,17 @@ class SemanticAnalyzer:
         # Further checks could be added here for specific types of tokens
 
     def execute_input(self):
-        variable = self.getnext()
+        variable = self.getnext()  # Retrieve the next token (e.g., the variable to store input)
         if variable['token'] in self.symbol_table:
-            new_value = input()
-            self.symbol_table[variable['token']]['initialized'] = True
+            # Create a pop-up input dialog using tkinter
+            root = tk.Tk()
+            root.withdraw()  # Hide the main tkinter window
+            new_value = simpledialog.askstring("Input Required", f"Enter value for {variable['token']}:")
+            root.destroy()  # Close the tkinter window
+            
+            # If user cancels the input, raise an error
+            if new_value is None:
+                self.raise_semantic_error(variable, f"No input provided for {variable['token']}.")
 
             try:
                 if new_value == "WIN" or new_value == "FAIL":
@@ -123,7 +130,7 @@ class SemanticAnalyzer:
                 self.symbol_table[variable['token']]['value'] = f'"{new_value}"'
                 self.symbol_table[variable['token']]['type'] = "YARN"
                 
-            # print(self.symbol_table)
+            self.symbol_table[variable['token']]['initialized'] = True
         else:
             self.raise_semantic_error(variable, f"Variable {variable['token']} not declared.")
 
