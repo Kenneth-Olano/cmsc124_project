@@ -27,7 +27,8 @@ constructs = set([
     "BOTH OF", "EITHER OF", "WON OF", "NOT", "ANY OF", "ALL OF", "BOTH SAEM", "DIFFRINT",
     "SMOOSH", "MAEK", "A", "IS NOW A", "VISIBLE", "GIMMEH", "O RLY?", "YA RLY", "MEBBE",
     "NO WAI", "OIC", "WTF?", "OMG", "OMGWTF", "IM IN YR", "UPPIN", "NERFIN", "YR", "TIL",
-    "WILE", "IM OUTTA YR", "HOW IZ I", "IF U SAY SO", "GTFO", "FOUND YR", "I IZ", "MKAY", "AN"
+    "WILE", "IM OUTTA YR", "HOW IZ I", "IF U SAY SO", "GTFO", "FOUND YR", "I IZ", "MKAY", "AN",
+    "YARN", "NUMBAR", "NUMBR", "TROOF", "LITERAL", "WIN", "FAIL"
 ])
 
 program_delimiters = {"HAI", "KTHXBYE"}
@@ -44,12 +45,14 @@ return_statements = {"FOUND YR", "GTFO"}
 function_call = {"I IZ", "MKAY"}
 assignment = {"R"}
 loop_op = {"UPPIN", "NERFIN"}
-typecast = {"IS NOW A", "MAEK"}
+typecast = {"IS NOW A", "MAEK", "A"}
 other_keywords = {"WON OF","IS"}
 function_keywords = {"HOW IZ I", "IF U SAY SO"}
 loop_keywords = {"IM IN YR", "IM OUTTA YR"}
 concatenate = {"SMOOSH", "+"}
 comments = {"BTW", "OBTW", "TLDR"}
+data_type = { "YARN", "NUMBAR", "NUMBR", "TROOF", "LITERAL"}
+troof = {"WIN", "FAIL"}
 
 # Regex patterns for literals
 literal_rules = [
@@ -96,17 +99,27 @@ def tokenize_line(line, lexemes, all_tokens, line_cnt):
                 lexeme = "O RLY?"
             elif lexeme == "WTF":
                 lexeme = "WTF?"
-
+            
             # Classify the keyword
             token_type = classify_keyword(lexeme)
-            lexemes["keywords"].append(lexeme)
-            all_tokens.append({
-                "token": lexeme,
-                "type": token_type,
-                "line": line_cnt,
-                "start": start,
-                "end": end
-            })
+            if token_type == "TROOF":
+                lexemes["literals"].append(lexeme)
+                all_tokens.append({
+                    "token": lexeme,
+                    "type": "TROOF",
+                    "line": line_cnt,
+                    "start": start,
+                    "end": end
+                })
+            else:
+                lexemes["keywords"].append(lexeme)
+                all_tokens.append({
+                    "token": lexeme,
+                    "type": token_type,
+                    "line": line_cnt,
+                    "start": start,
+                    "end": end
+                })
             positions.append((start, end))
 
     # Identify literals
@@ -125,6 +138,7 @@ def tokenize_line(line, lexemes, all_tokens, line_cnt):
                     "end": end
                 })
                 positions.append((start, end))
+          
 
     # Identify identifiers
     identifiers = re.finditer(identifier_rule, line)
@@ -209,6 +223,10 @@ def classify_keyword(lexeme):
         return "Comment"
     elif lexeme in typecast:
         return "Typecast"
+    elif lexeme in data_type:
+        return "Type"
+    elif lexeme in troof:
+        return "TROOF"
     else:
         return "Other Keyword"
 

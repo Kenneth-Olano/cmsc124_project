@@ -176,13 +176,14 @@ class SyntaxAnalyzer:
     def parse_imp_typecast(self):
         self.skip_comment()
         self.match("Typecast", "IS NOW A")
-        self.match("Literal")
+        self.match("Type")
 
     def parse_exp_typecast(self):
         self.skip_comment()
         self.match("Typecast", "MAEK")
         self.match("Variable")
-        self.match("Literal")
+        self.match("Typecast", "A")
+        self.match("Type")
 
     def parse_value(self):
         self.skip_comment()
@@ -347,7 +348,7 @@ class SyntaxAnalyzer:
         """Parse the <print> rule."""
         current_line = self.current_token["line"]
         self.match("Input/Output", "VISIBLE")
-        while self.current_token and self.current_token['line']==current_line and self.current_token["type"] in ["Logical Operator", "Concatenate", "NUMBR", "NUMBAR", "YARN", "TROOF", "Literal","Identifier", "Function", "Variable", "Mathematical Operator"]:
+        while self.current_token and self.current_token['line']==current_line and self.current_token["type"] in ["Typecast", "Logical Operator", "Concatenate", "NUMBR", "NUMBAR", "YARN", "TROOF", "Literal","Identifier", "Function", "Variable", "Mathematical Operator"]:
         # if self.current_token and self.current_token["type"] in ["Connector", "NUMBR", "NUMBAR", "YARN", "TROOF", "Literal","Identifier", "Function", "Variable", "Mathematical Operator"]:
             if self.current_token["type"] == "Mathematical Operator":
                 self.parse_mathop()
@@ -355,6 +356,8 @@ class SyntaxAnalyzer:
                 self.parse_logicop()
             elif self.current_token["type"] == "Concatenate":
                 self.parse_concatenate()
+            elif self.current_token["type"] == "Typecast" and self.current_token['token'] == "MAEK":
+                self.parse_exp_typecast()
             elif self.current_token["type"] in ["NUMBR", "NUMBAR", "YARN", "TROOF", "Function", "Variable"]:
                 self.advance()
             else:

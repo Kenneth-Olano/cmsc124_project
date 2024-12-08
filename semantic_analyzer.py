@@ -81,7 +81,8 @@ class SemanticAnalyzer:
             self.execute_math(self.current_index, [])
         elif (token_type == 'Input/Output') and token_value == 'VISIBLE':
             self.visible(self.current_index)
-
+        elif(token_value == "MAEK" or token_value == "IS NOW A"):
+            self.execute_typecasting(token, self.current_index)
         elif token_type == 'Assignment Operator' and token_value == "R":
             # Check if the assignment is to a valid variable
             self.check_variable_assignment(token)
@@ -102,9 +103,10 @@ class SemanticAnalyzer:
         #     # Check if we are inside a loop for variable scope management
         #     self.handle_loop_scope(token)
         elif token_type == "Variable":
-            if token_value in self.symbol_table:
+            if token_value in self.symbol_table and self.all_tokens[self.current_index]['line'] > self.all_tokens[self.current_index-1]['line'] :
+                print("PUTA")
                 self.IT = self.symbol_table[token_value]
-            else:
+            elif token_value not in self.symbol_table:
                 self.raise_semantic_error(token, f'Variable {token['token']} should be declared.')
         # Further checks could be added here for specific types of tokens
 
@@ -113,7 +115,7 @@ class SemanticAnalyzer:
     def execute_switch(self, index):
         self.current_index = self.current_index+1
         self.current_token = self.all_tokens[self.current_index]
-        print(self.IT)
+        # print(self.IT)
         while self.current_token['token'] != "OMGWTF":
             if self.current_token['token'] == "OMG":
                 self.current_index+=1
@@ -133,7 +135,7 @@ class SemanticAnalyzer:
                             value = self.symbol_table[self.current_token['token']]['value']
                         else:
                             self.raise_semantic_error(self.current_token['token'], f'Variable {self.current_token['token']} should be declared.')
-                    print(value)
+                    # print(value)
                     if value == self.IT['value']:
                         while self.current_token['token'] != "GTFO":
                             print(self.current_token['token'])
@@ -374,6 +376,68 @@ class SemanticAnalyzer:
             self.execute_statement(self.all_tokens[function_index], function_index)
             function_index+=1
         
+    def execute_typecasting(self, token, index):
+        next_index = index
+        if token['token'] == "MAEK":
+            next_index+=1
+            next_token = self.all_tokens[next_index]
+            if next_token['type'] == "Variable":
+                if next_token['token'] in self.symbol_table:
+                    variable = next_token['token']
+                    next_index+=2
+                    to_type = self.all_tokens[next_index]['token']
+                    if self.symbol_table[variable]['type'] == "NOOB":
+                        if to_type == "TROOF":
+                            return {'type': 'TROOF', 'initialized': True, 'value':"FAIL"}
+                        else:
+                            self.raise_semantic_error(next_token, f'NOOB values can only be typecasted to TROOF.')
+                    elif self.symbol_table[variable]['type'] == "NUMBR" or self.symbol_table[variable]['type'] == "NUMBAR":
+                        if self.symbol_table[variable]['type'] == "NUMBR" and to_type == "NUMBAR":
+                            return {'type': 'NUMBAR', 'initialized': True, 'value':float(self.symbol_table[variable]['value'])}
+                        elif self.symbol_table[variable]['type'] == "NUMBAR" and to_type == "NUMBR":
+                            return {'type': 'NUMBAR', 'initialized': True, 'value':int(self.symbol_table[variable]['value'])}
+                        elif to_type == "YARN":
+                            return{'type': 'YARN', 'initialized': True, 'value':f'"{(self.symbol_table[variable]['value'])}"'}
+                        elif to_type == "TROOF":
+                            print("PANALO")
+                            bool_val = bool(self.symbol_table[variable]['value'])
+                            print(bool_val)
+                            if bool_val == True:
+                                print("KUHA")
+                                self.IT = 'WIN'
+                                return
+                            else:
+                                return{'type': 'TROOF', 'initialized': True, 'value':'FAIL'}
+                        else:
+                            self.raise_semantic_error(next_token, f'NUMBR/NUMBAR cannot be casted into NOOB.')
+                    elif self.symbol_table[variable]['type'] == "YARN":
+                        if to_type == "NUMBR":
+                            return{'type': 'NUMBR', 'initialized': True, 'value':int(self.symbol_table[variable]['value'])}
+                        elif to_type == "NUMBAR":
+                            return {'type': 'NUMBAR', 'initialized': True, 'value':float(self.symbol_table[variable]['value'])}
+                        elif to_type == "TROOF":
+                            bool_val = bool(self.symbol_table[variable]['value'])
+                            if bool_val == True:
+                                return {'type': 'TROOF', 'initialized': True, 'value':'WIN'}
+                            else:
+                                return {'type': 'TROOF', 'initialized': True, 'value':'FAIL'}
+                        else:
+                            self.raise_semantic_error(next_token, f'YARN cannot be casted into NOOB.')
+                    elif self.symbol_table[variable]['type'] == "TROOF":
+                        bool_val = True if self.symbol_table[variable]['value'] == "WIN" else False
+                        if to_type == "NUMBR":
+                            return {'type': 'NUMBR', 'initialized': True, 'value':int(bool_val)}
+                        elif to_type == "NUMBAR":
+                            return {'type': 'NUMBAR', 'initialized': True, 'value':float(bool_val)}
+                        elif to_type == "YARN":
+                            return {'type': 'TROOF', 'initialized': True, 'value':f'"{self.symbol_table[variable]['value']}'}
+                        else:
+                            self.raise_semantic_error(next_token, f'YARN cannot be casted into NOOB.')
+                    
+                        
+
+
+
 
     def execute_math(self,index, math_stack):
         current_index = index
@@ -506,6 +570,11 @@ class SemanticAnalyzer:
             self.log_to_console(f'> {self.IT}')
         elif next_token['type'] == "Mathematical Operator":
             self.execute_math(index, [])
+            self.log_to_console(f'> {self.IT}')
+        elif next_token['type'] == "Typecast" and next_token['token'] == "MAEK":
+            print("TANGA")
+            self.execute_typecasting(self.all_tokens[index], index)
+            print(self.IT)
             self.log_to_console(f'> {self.IT}')
         else:
             # print(next_token['token'])
