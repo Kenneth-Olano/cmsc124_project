@@ -65,11 +65,13 @@ identifier_rule = r"[a-zA-Z][a-zA-Z0-9_]*"
 code_line = []
 
 
+import re
+
 def tokenize_line(line, lexemes, all_tokens, line_cnt):
     # Track positions of all found tokens to avoid overlap
     positions = []
 
-    literaltype_arr = ["YARN", "NUMBAR", "NUMBR", "TROOF", "LITERAL"]
+    literaltype_arr = ["YARN", "NUMBAR", "NUMBR", "TROOF"]
 
     # Handle inline comments
     btw_match = re.search(r"\bBTW\b", line)
@@ -148,8 +150,24 @@ def tokenize_line(line, lexemes, all_tokens, line_cnt):
     remaining_text = re.finditer(r"\S+", line)
     for text in remaining_text:
         start, end = text.span()
-        if not is_within_positions((start, end), positions):  # Unclassified token
-            lexeme = text.group().strip()
+        lexeme = text.group().strip()
+
+        # Skip tokens inside comments
+        if is_within_positions((start, end), positions):
+            continue  # Skip the token if it's within a comment
+
+        if lexeme == "+":
+            # Label `+` as Concatenate if it's not part of a comment
+            lexemes.setdefault("concatenation", []).append(lexeme)
+            all_tokens.append({
+                "token": lexeme,
+                "type": "Concatenate",  # Updated type
+                "line": line_cnt,
+                "start": start,
+                "end": end
+            })
+        elif not is_within_positions((start, end), positions):  # Unclassified token
+            # If it's not `+`, treat it as an error
             lexemes.setdefault("errors", []).append(lexeme)
             all_tokens.append({
                 "token": lexeme,
@@ -158,7 +176,8 @@ def tokenize_line(line, lexemes, all_tokens, line_cnt):
                 "start": start,
                 "end": end
             })
-            positions.append((start, end))
+            
+        positions.append((start, end))
 
 
 def is_within_positions(span, positions):
@@ -167,6 +186,7 @@ def is_within_positions(span, positions):
         if start <= span[0] < end or start < span[1] <= end:
             return True
     return False
+
 
 
 def classify_keyword(lexeme):
@@ -214,11 +234,23 @@ def classify_keyword(lexeme):
 
 
 def classify_identifier(identifier_text, context):
-    """Heuristically classify an identifier based on its context."""
-    if any(keyword in context for keyword in function_keywords):
-        return "Function" if "YR" not in context else "Function Parameter"
-    if any(keyword in context for keyword in loop_keywords):
-        return "Loop"
+    """Classify an identifier based on the previous token (lexeme)."""
+    
+    # Ensure there's some context before the identifier
+    if context.strip():  # Check if the context is not empty or just whitespace
+        prev_tokens = context.strip().split()  # Split the context into words
+        if prev_tokens:  # Ensure there's at least one word before the identifier
+            prev_token = prev_tokens[-1]  # Get the last word before the identifier
+            
+            # If the previous token is part of a loop-related keyword
+            if prev_token in loop_keywords:
+                return "Loop"  # The identifier is part of a loop
+            
+            # If the previous token is part of a function-related keyword
+            if prev_token in function_keywords:
+                return "Function"  # The identifier is part of a function
+    
+    # Default classification if no loop or function context is found
     return "Variable"
 
 
