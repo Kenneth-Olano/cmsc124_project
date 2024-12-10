@@ -543,7 +543,6 @@ class SemanticAnalyzer:
                     self.symbol_table[variable]['value'] = int(next_token['token'])  # Convert the token to an integer
                 except ValueError:
                     self.raise_error(f"Cannot convert '{next_token['token']}' to an integer.")  # Raise an error if it can't be converted
-                self.symbol_table[variable]['value'] = next_token['token']
             elif next_token['type'] == "Typecast":
                 if next_token['token'] == "MAEK":
                     self.execute_typecast(self.current_index+1)
