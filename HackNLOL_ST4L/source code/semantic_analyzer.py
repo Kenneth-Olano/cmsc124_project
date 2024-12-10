@@ -121,71 +121,6 @@ class SemanticAnalyzer:
             # Start of an if-block (e.g., "O RLY? x")
             self.execute_if_else(self.current_index)
 
-        
-
-
-    def execute_comparison(self, index):
-        """
-        Executes comparison and relational operations using a stack to support prefix notation.
-        Handles BOTH SAEM, DIFFRINT, BIGGR OF, and SMALLR OF, where operations are read first.
-        """
-        stack = []
-        self.current_index = index
-
-        # Helper function to evaluate an operation with two operands
-        def evaluate_operation(operator, operand1, operand2):
-            if operator == "BOTH SAEM":  # Equality
-                return operand1 == operand2
-            elif operator == "DIFFRINT":  # Inequality
-                return operand1 != operand2
-            elif operator == "BIGGR OF":  # Maximum
-                return max(operand1, operand2)
-            elif operator == "SMALLR OF":  # Minimum
-                return min(operand1, operand2)
-            else:
-                raise SyntaxError(f"Unknown operator: {operator}")
-
-        # Iterate through tokens starting from the given index
-        while self.current_index < len(self.all_tokens):
-            self.current_token = self.all_tokens[self.current_index]
-
-            if self.current_token['type'] in ["NUMBR", "NUMBAR", "Variable"]:
-                # Push operand value to stack
-                operand = self.get_operand_value(self.current_token)
-                stack.append(operand)
-
-                # Evaluate if there are two operands and one operator in the stack
-                while len(stack) >= 3 and isinstance(stack[-1], (int, float)) and isinstance(stack[-2], (int, float)):
-                    operand2 = stack.pop()
-                    operand1 = stack.pop()
-                    operator = stack.pop()
-                    result = evaluate_operation(operator, operand1, operand2)
-                    stack.append(result)  # Push the result back to the stack
-
-            elif self.current_token['token'] in ["BOTH SAEM", "DIFFRINT", "BIGGR OF", "SMALLR OF"]:
-                # Push operator to stack
-                stack.append(self.current_token['token'])
-
-            elif self.current_token['token'] == "AN":
-                # Continue parsing for the next operand or operator
-                pass
-
-            else:
-                # Stop processing if an unknown token is encountered
-                break
-
-            self.current_index += 1
-            
-
-        # Final result is the only element left in the stack
-        if len(stack) == 1:
-            self.IT = stack.pop()
-        else:
-            raise SyntaxError("Invalid prefix notation in comparison expression.")
-        
-        # print(self.IT)
-        
-        return self.current_index
 
 
     def execute_if_else(self, index):
@@ -217,7 +152,7 @@ class SemanticAnalyzer:
 
             # Skip NO WAI block (if present) and proceed to OIC
             while self.current_token['token'] != "OIC":
-                print(f"Skipping token in NO WAI block: {self.current_token}")
+                # print(f"Skipping token in NO WAI block: {self.current_token}")
                 self.current_index += 1
                 if self.current_index >= len(self.all_tokens):
                     raise IndexError("Reached end of tokens while skipping NO WAI block.")
@@ -229,7 +164,7 @@ class SemanticAnalyzer:
             # Skip YA RLY block if it exists
             if self.current_token['token'] == "YA RLY":
                 while self.current_token['token'] not in ["NO WAI", "OIC"]:
-                    print(f"Skipping token in YA RLY block: {self.current_token}")
+                    # print(f"Skipping token in YA RLY block: {self.current_token}")
                     self.current_index += 1
                     if self.current_index >= len(self.all_tokens):
                         raise IndexError("Reached end of tokens while skipping YA RLY block.")
@@ -241,7 +176,7 @@ class SemanticAnalyzer:
                 self.current_token = self.all_tokens[self.current_index]
 
                 while self.current_token['token'] != "OIC":
-                    print(f"Executing NO WAI statement: {self.current_token}")
+                    # print(f"Executing NO WAI statement: {self.current_token}")
                     self.execute_statement(self.current_token, self.current_index)
                     self.current_index += 1
                     if self.current_index >= len(self.all_tokens):
@@ -253,7 +188,7 @@ class SemanticAnalyzer:
             raise SyntaxError("Expected 'OIC' to close if-else block.")
 
         print(f"End of if-else block at index {self.current_index}: {self.current_token}")
-        self.current_index += 1  # Move past OIC
+
 
 
 
@@ -668,7 +603,8 @@ class SemanticAnalyzer:
                 index = self.execute_math(index, []) - 1
                 output.append(str(self.IT))  # Add math result as string
             elif next_token['type'] == "Logical Operator":
-                index = self.execute_comparison(index) - 1
+                index = self.execute_comparison(index)
+                print(self.all_tokens[index]['token'])
                 if self.IT == True:
                     output.append("WIN")
                 else:
@@ -681,10 +617,77 @@ class SemanticAnalyzer:
             # Advance to the next token
             index += 1
             next_token = self.all_tokens[index] if index < len(self.all_tokens) else None
+            
 
         # Concatenate all parts and update self.IT
         self.IT = ''.join(output)
         self.log_to_console(f"> {self.IT}")  # Log the final result
+
+    def execute_comparison(self, index):
+        """
+        Executes comparison and relational operations using a stack to support prefix notation.
+        Handles BOTH SAEM, DIFFRINT, BIGGR OF, and SMALLR OF, where operations are read first.
+        """
+        stack = []
+        self.current_index = index
+
+        # Helper function to evaluate an operation with two operands
+        def evaluate_operation(operator, operand1, operand2):
+            if operator == "BOTH SAEM":  # Equality
+                return operand1 == operand2
+            elif operator == "DIFFRINT":  # Inequality
+                return operand1 != operand2
+            elif operator == "BIGGR OF":  # Maximum
+                return max(operand1, operand2)
+            elif operator == "SMALLR OF":  # Minimum
+                return min(operand1, operand2)
+            else:
+                raise SyntaxError(f"Unknown operator: {operator}")
+
+        # Iterate through tokens starting from the given index
+        while self.current_index < len(self.all_tokens):
+            self.current_token = self.all_tokens[self.current_index]
+            
+
+            if self.current_token['type'] in ["NUMBR", "NUMBAR", "Variable"]:
+                # Push operand value to stack
+                operand = self.get_operand_value(self.current_token)
+                stack.append(operand)
+
+                # Evaluate if there are two operands and one operator in the stack
+                while len(stack) >= 3 and isinstance(stack[-1], (int, float)) and isinstance(stack[-2], (int, float)):
+                    operand2 = stack.pop()
+                    operand1 = stack.pop()
+                    operator = stack.pop()
+                    result = evaluate_operation(operator, operand1, operand2)
+                    stack.append(result)  # Push the result back to the stack
+
+            elif self.current_token['token'] in ["BOTH SAEM", "DIFFRINT", "BIGGR OF", "SMALLR OF"]:
+                # Push operator to stack
+                stack.append(self.current_token['token'])
+
+            elif self.current_token['token'] == "AN":
+                # Continue parsing for the next operand or operator
+                pass
+
+            else:
+                # Stop processing if an unknown token is encountered
+                break
+
+            self.current_index += 1  
+            
+
+        # print(self.all_tokens[index])
+        # Final result is the only element left in the stack
+        if len(stack) == 1:
+            self.IT = stack.pop()
+        else:
+            raise SyntaxError("Invalid prefix notation in comparison expression.")
+        
+        # print(self.IT)
+        
+        return self.current_index
+
 
     def handle_loop_scope(self, token):
         # Add loop-related scope management
