@@ -125,14 +125,23 @@ class SyntaxAnalyzer:
             self.match("Data Declaration", "ITZ")
             self.parse_value()
     def parse_control_flow(self):
-        self.match("Control Flow", "O RLY?")
-        self.match("Control Flow", "YA RLY")
-        while self.current_token and self.current_token["token"] != "NO WAI":
-            self.parse_statement()
-        self.match("Control Flow", "NO WAI")
-        while self.current_token and self.current_token["token"] != "OIC":
-            self.parse_statement()
-        self.match("Control Flow", "OIC")
+        self.match("Control Flow", "O RLY?")  # Expect the "O RLY?" token (start of conditional check)
+        self.match("Control Flow", "YA RLY")  # Expect the "YA RLY" token (start of true-block)
+        
+        # Parse the block of statements under "YA RLY"
+        while self.current_token and self.current_token["token"] != "NO WAI" and self.current_token["token"] != "OIC":
+            self.parse_statement()  # Parse statements in the true block
+        
+        # Check for "NO WAI" (if it exists), otherwise move on
+        if self.current_token and self.current_token["token"] == "NO WAI":
+            self.match("Control Flow", "NO WAI")  # Match the "NO WAI" token (start of the false block)
+            
+            # Parse the block of statements under "NO WAI"
+            while self.current_token and self.current_token["token"] != "OIC":
+                self.parse_statement()  # Parse statements in the false block
+        
+        self.match("Control Flow", "OIC")  # Match the "OIC" token (end of the control flow)
+
 
     def parse_switch(self):
         self.match("Switch", "WTF?")
@@ -147,15 +156,6 @@ class SyntaxAnalyzer:
             self.parse_statement()
         
         self.match("Control Flow", "OIC")
-
-
-
-    #def parse_initialization(self):
-       # """Parse the <initialization> rule"""
-     #   self.match("Data Initialization", "WAZZUP")
-      #  while self.current_token and self.current_token["token"] != "BUHBYE":
-         #   self.parse_declaration()
-        #self.match("Data Initialization", "BUHBYE")
 
     def parse_identifier(self):
         self.skip_comment()
@@ -176,14 +176,13 @@ class SyntaxAnalyzer:
     def parse_imp_typecast(self):
         self.skip_comment()
         self.match("Typecast", "IS NOW A")
-        self.match("Type")
+        self.match("LITERAL")
 
     def parse_exp_typecast(self):
         self.skip_comment()
-        self.match("Typecast", "MAEK")
+        self.match("Typecast", "MAEK A")
         self.match("Variable")
-        self.match("Typecast", "A")
-        self.match("Type")
+        self.match("LITERAL")
 
     def parse_value(self):
         self.skip_comment()
@@ -196,7 +195,7 @@ class SyntaxAnalyzer:
                 self.parse_logicop()
             elif self.current_token["type"] == "Concatenate":
                 self.parse_concatenate()
-            elif self.current_token["type"] == "Typecast" and self.current_token["token"] == "MAEK":
+            elif self.current_token["type"] == "Typecast" and self.current_token["token"] == "MAEK A":
                 self.parse_exp_typecast()
             elif self.current_token and self.current_token["type"] == "Variable":
                 self.parse_identifier()
@@ -257,7 +256,7 @@ class SyntaxAnalyzer:
         self.match("Function Delimiter", "HOW IZ I")
 
         # Checks if there is function identifier
-        if self.current_token["type"] != "Function":
+        if self.current_token["type"] != "Function" or self.current_token["type"] != "Variable":
             self.raise_error("Invalid function identifier after 'HOW IZ I'")
         self.function_dict[self.current_token['token']] = {}
         current_function =self.current_token['token']
@@ -348,25 +347,24 @@ class SyntaxAnalyzer:
         """Parse the <print> rule."""
         current_line = self.current_token["line"]
         self.match("Input/Output", "VISIBLE")
-        while self.current_token and self.current_token['line']==current_line and self.current_token["type"] in ["Typecast", "Logical Operator", "Concatenate", "NUMBR", "NUMBAR", "YARN", "TROOF", "Literal","Identifier", "Function", "Variable", "Mathematical Operator"]:
-        # if self.current_token and self.current_token["type"] in ["Connector", "NUMBR", "NUMBAR", "YARN", "TROOF", "Literal","Identifier", "Function", "Variable", "Mathematical Operator"]:
+        
+        while self.current_token and self.current_token['line'] == current_line and self.current_token["type"] in ["Logical Operator", "Concatenate", "NUMBR", "NUMBAR", "YARN", "TROOF", "Literal", "Identifier", "Function", "Variable", "Mathematical Operator"]:
             if self.current_token["type"] == "Mathematical Operator":
                 self.parse_mathop()
             elif self.current_token["type"] == "Logical Operator":
                 self.parse_logicop()
             elif self.current_token["type"] == "Concatenate":
                 self.parse_concatenate()
-            elif self.current_token["type"] == "Typecast" and self.current_token['token'] == "MAEK":
-                self.parse_exp_typecast()
             elif self.current_token["type"] in ["NUMBR", "NUMBAR", "YARN", "TROOF", "Function", "Variable"]:
                 self.advance()
             else:
                 self.raise_error("Valid print operands")
 
-            if self.current_token['line']==current_line and (self.current_token["token"] == "+" or self.current_token["token"] == "AN"):
-                self.advance()
-            elif  self.current_token['line']!=current_line:
-                break
+            # Check for valid print connectors (either "AN" or "+" operator)
+            if self.current_token['line'] == current_line and (self.current_token["token"] == "+" or self.current_token["token"] == "AN"):
+                self.advance()  # Move to the next token if valid connector
+            elif self.current_token['line'] != current_line:
+                break  # Exit the loop if the line has changed
             else:
                 self.raise_error("Valid print connector")
 

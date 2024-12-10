@@ -30,6 +30,7 @@ class SemanticAnalyzer:
 
     def get_symbol_table(self):
         """Method to get the current symbol table."""
+        # Store IT in the symbol table directly
         self.symbol_table["IT"] = {"value": self.IT}
         return self.symbol_table
 
@@ -66,8 +67,6 @@ class SemanticAnalyzer:
         token_value = token['token']
         
         if token_type == 'Data Declaration' and token_value == "I HAS A":
-            # Check if it's a variable declaration like "I HAS A"
-            
             next_token = self.getnext()
             self.declare_variable(next_token)
         elif (token_type == 'Data Declaration' and token_value == "ITZ"):
@@ -82,8 +81,7 @@ class SemanticAnalyzer:
             self.execute_math(self.current_index, [])
         elif (token_type == 'Input/Output') and token_value == 'VISIBLE':
             self.visible(self.current_index)
-        elif(token_value == "MAEK" or token_value == "IS NOW A"):
-            self.execute_typecasting(token, self.current_index)
+
         elif token_type == 'Assignment Operator' and token_value == "R":
             # Check if the assignment is to a valid variable
             self.check_variable_assignment(token)
@@ -104,71 +102,85 @@ class SemanticAnalyzer:
         #     # Check if we are inside a loop for variable scope management
         #     self.handle_loop_scope(token)
         elif token_type == "Variable":
-            if token_value in self.symbol_table and self.all_tokens[self.current_index]['line'] > self.all_tokens[self.current_index-1]['line'] :
-                print("PUTA")
+            if token_value in self.symbol_table:
                 self.IT = self.symbol_table[token_value]
-            elif token_value not in self.symbol_table:
+            else:
                 self.raise_semantic_error(token, f'Variable {token['token']} should be declared.')
-        # Further checks could be added here for specific types of tokens
         elif token_value == "BOTH SAEM":
         # Equality comparison (e.g., "BOTH SAEM x AND y")
-            self.execute_comparison(self.current_index, True)
+            self.execute_comparison(self.current_index)
 
         elif token_value == "DIFFRINT":
             # Inequality comparison (e.g., "DIFFRINT x AND y")
-            self.execute_comparison(self.current_index, False)
+            self.execute_comparison(self.current_index)
 
         elif token_value == "O RLY?":
             # Start of an if-block (e.g., "O RLY? x")
             self.execute_if_else(self.current_index)
 
-    def execute_comparison(self, index, is_equality):
+
+    def execute_comparison(self, index):
         """
-        Executes comparison and relational operations.
-        Handles BOTH SAEM, DIFFRINT, BIGGR OF, and SMALLR OF.
+        Executes comparison and relational operations using a stack to support prefix notation.
+        Handles BOTH SAEM, DIFFRINT, BIGGR OF, and SMALLR OF, where operations are read first.
         """
         self.IT = None
-        self.current_index = index+1
-        self.current_token = self.all_tokens[self.current_index]
-        operand1 = self.get_operand_value(self.current_token)
+        stack = []
+        self.current_index = index
 
-        # Advance to check for AN
-        self.current_index += 2
-        self.current_token = self.all_tokens[self.current_index]
-
-        # Check if the next operation involves BIGGR OF or SMALLR OF
-        if self.current_token['token'] in ["BIGGR OF"]:
-
-            self.current_index += 3
-            self.current_token = self.all_tokens[self.current_index]
-            operand2 = self.get_operand_value(self.current_token)
-
-
-            if is_equality:
-                self.IT = operand1 >= operand2
+        # Helper function to evaluate an operation with two operands
+        def evaluate_operation(operator, operand1, operand2):
+            if operator == "BOTH SAEM":  # Equality
+                return operand1 == operand2
+            elif operator == "DIFFRINT":  # Inequality
+                return operand1 != operand2
+            elif operator == "BIGGR OF":  # Maximum
+                return max(operand1, operand2)
+            elif operator == "SMALLR OF":  # Minimum
+                return min(operand1, operand2)
             else:
-                self.IT = operand1 > operand2
+                raise SyntaxError(f"Unknown operator: {operator}")
 
-        elif self.current_token['token'] in ["SMALLR OF"]:
-
-            self.current_index += 3
+        # Iterate through tokens starting from the given index
+        while self.current_index < len(self.all_tokens):
             self.current_token = self.all_tokens[self.current_index]
-            operand2 = self.get_operand_value(self.current_token)
 
-            if is_equality:
-                self.IT = operand1 <= operand2
+            if self.current_token['type'] in ["NUMBR", "NUMBAR", "Variable"]:
+                # Push operand value to stack
+                operand = self.get_operand_value(self.current_token)
+                stack.append(operand)
+
+                # Evaluate if there are two operands and one operator in the stack
+                while len(stack) >= 3 and isinstance(stack[-1], (int, float)) and isinstance(stack[-2], (int, float)):
+                    operand2 = stack.pop()
+                    operand1 = stack.pop()
+                    operator = stack.pop()
+                    result = evaluate_operation(operator, operand1, operand2)
+                    stack.append(result)  # Push the result back to the stack
+
+            elif self.current_token['token'] in ["BOTH SAEM", "DIFFRINT", "BIGGR OF", "SMALLR OF"]:
+                # Push operator to stack
+                stack.append(self.current_token['token'])
+
+            elif self.current_token['token'] == "AN":
+                # Continue parsing for the next operand or operator
+                pass
+
             else:
-                self.IT = operand1 < operand2
+                # Stop processing if an unknown token is encountered
+                break
 
+            self.current_index += 1
+            
+
+        # Final result is the only element left in the stack
+        if len(stack) == 1:
+            self.IT = stack.pop()
         else:
-            operand2 = self.get_operand_value(self.current_token)
-            # Evaluate the relational condition based on BOTH SAEM or DIFFRINT
-            if is_equality:
-               self.IT = operand1 == operand2  # BOTH SAEM with BIGGR OF/SMALLR OF
-            else:
-                self.IT = operand1 != operand2  # DIFFRINT with BIGGR OF/SMALLR OF
+            raise SyntaxError("Invalid prefix notation in comparison expression.")
+        
+        return self.current_index
 
-    
 
     def execute_if_else(self, index):
         """
@@ -235,136 +247,6 @@ class SemanticAnalyzer:
 
         self.current_index += 1
 
-
-
-    def get_operand_value(self, token):
-        if token['type'] in ["NUMBR", "NUMBAR", "YARN", "TROOF", "Variable"]:
-            if token['type'] == "NUMBR":
-                return int(token['token'])
-            elif token['type'] == "NUMBAR":
-                return float(token['token'])
-            elif token['type'] == "YARN":
-                return token['token'][1:-1]  # Remove quotes around the string
-            elif token['type'] == "TROOF":
-                return token['token']
-            elif token['type'] == "Variable":
-                if token['token'] in self.symbol_table:
-                    return self.symbol_table[token['token']]['value']
-                else:
-                    self.raise_semantic_error(token, f"Variable {token['token']} should be declared.")
-        return None
-    def execute_comparison(self, index, is_equality):
-        """
-        Executes comparison and relational operations.
-        Handles BOTH SAEM, DIFFRINT, BIGGR OF, and SMALLR OF.
-        """
-        self.IT = None
-        self.current_index = index+1
-        self.current_token = self.all_tokens[self.current_index]
-        operand1 = self.get_operand_value(self.current_token)
-
-        # Advance to check for AN
-        self.current_index += 2
-        self.current_token = self.all_tokens[self.current_index]
-
-        # Check if the next operation involves BIGGR OF or SMALLR OF
-        if self.current_token['token'] in ["BIGGR OF"]:
-
-            self.current_index += 3
-            self.current_token = self.all_tokens[self.current_index]
-            operand2 = self.get_operand_value(self.current_token)
-
-
-            if is_equality:
-                self.IT = operand1 >= operand2
-            else:
-                self.IT = operand1 > operand2
-
-        elif self.current_token['token'] in ["SMALLR OF"]:
-
-            self.current_index += 3
-            self.current_token = self.all_tokens[self.current_index]
-            operand2 = self.get_operand_value(self.current_token)
-
-            if is_equality:
-                self.IT = operand1 <= operand2
-            else:
-                self.IT = operand1 < operand2
-
-        else:
-            operand2 = self.get_operand_value(self.current_token)
-            # Evaluate the relational condition based on BOTH SAEM or DIFFRINT
-            if is_equality:
-               self.IT = operand1 == operand2  # BOTH SAEM with BIGGR OF/SMALLR OF
-            else:
-                self.IT = operand1 != operand2  # DIFFRINT with BIGGR OF/SMALLR OF
-
-    
-
-    def execute_if_else(self, index):
-        """
-        Executes an if-else block based on the value of self.IT.
-        Evaluates conditions for YA RLY and NO WAI, and executes the respective branch.
-        """
-        self.current_index = index
-        self.current_token = self.all_tokens[self.current_index]
-
-        # Check for "O RLY?" which starts the if-else block
-        if self.current_token['token'] != "O RLY?":
-            raise SyntaxError(f"Expected 'O RLY?' at index {index}, but found {self.current_token['token']}")
-
-        self.current_index += 1
-        self.current_token = self.all_tokens[self.current_index]
-
-        if self.IT:  # IT is True (WIN), execute YA RLY branch
-            if self.current_token['token'] != "YA RLY":
-                raise SyntaxError("Expected 'YA RLY' after 'O RLY?' for True branch.")
-            
-            self.current_index += 1
-            self.current_token = self.all_tokens[self.current_index]
-
-            # Process the statements in the true branch
-            while self.current_token['token'] not in ["NO WAI", "OIC"]:
-                self.execute_statement(self.current_token, self.current_index)
-                self.current_index += 1
-                if self.current_index >= len(self.all_tokens):
-                    raise IndexError("current_index out of range while processing YA RLY block!")
-                self.current_token = self.all_tokens[self.current_index]
-
-            # Skip the NO WAI block (if it exists)
-            if self.current_token['token'] == "NO WAI":
-                while self.current_token['token'] != "OIC":
-                    self.current_index += 1
-                    if self.current_index >= len(self.all_tokens):
-                        raise IndexError("current_index out of range while skipping NO WAI block!")
-                    self.current_token = self.all_tokens[self.current_index]
-
-        else:  # IT is False (FAIL), execute NO WAI branch
-            if self.current_token['token'] == "YA RLY":
-                # Skip the YA RLY block
-                while self.current_token['token'] not in ["NO WAI", "OIC"]:
-                    self.current_index += 1
-                    if self.current_index >= len(self.all_tokens):
-                        raise IndexError("current_index out of range while skipping YA RLY block!")
-                    self.current_token = self.all_tokens[self.current_index]
-
-            if self.current_token['token'] == "NO WAI":
-                self.current_index += 1
-                self.current_token = self.all_tokens[self.current_index]
-
-                # Process the statements in the false branch
-                while self.current_token['token'] != "OIC":
-                    self.execute_statement(self.current_token, self.current_index)
-                    self.current_index += 1
-                    if self.current_index >= len(self.all_tokens):
-                        raise IndexError("current_index out of range while processing NO WAI block!")
-                    self.current_token = self.all_tokens[self.current_index]
-
-        # Ensure the block ends with "OIC"
-        if self.current_token['token'] != "OIC":
-            raise SyntaxError(f"Expected 'OIC' at the end of if-else block, but found {self.current_token['token']}")
-
-        self.current_index += 1
 
 
     def get_operand_value(self, token):
@@ -387,7 +269,7 @@ class SemanticAnalyzer:
     def execute_switch(self, index):
         self.current_index = self.current_index+1
         self.current_token = self.all_tokens[self.current_index]
-        # print(self.IT)
+        print(self.IT)
         while self.current_token['token'] != "OMGWTF":
             if self.current_token['token'] == "OMG":
                 self.current_index+=1
@@ -407,7 +289,7 @@ class SemanticAnalyzer:
                             value = self.symbol_table[self.current_token['token']]['value']
                         else:
                             self.raise_semantic_error(self.current_token['token'], f'Variable {self.current_token['token']} should be declared.')
-                    # print(value)
+                    print(value)
                     if value == self.IT['value']:
                         while self.current_token['token'] != "GTFO":
                             print(self.current_token['token'])
@@ -440,7 +322,7 @@ class SemanticAnalyzer:
             # If user cancels the input, raise an error
             if new_value is None:
                 self.raise_semantic_error(variable, f"No input provided for {variable['token']}.")
-
+            self.log_to_console(new_value)
             try:
                 if new_value == "WIN" or new_value == "FAIL":
                     self.symbol_table[variable['token']]['value'] = new_value
@@ -516,7 +398,6 @@ class SemanticAnalyzer:
         else:
             # Raise a semantic error if the variable is re-declared
             self.raise_semantic_error(self.current_token, f"Variable '{variable_name}' is already declared.")
-
 
 
     def assignval_tovar(self, token):
@@ -649,68 +530,6 @@ class SemanticAnalyzer:
             self.execute_statement(self.all_tokens[function_index], function_index)
             function_index+=1
         
-    def execute_typecasting(self, token, index):
-        next_index = index
-        if token['token'] == "MAEK":
-            next_index+=1
-            next_token = self.all_tokens[next_index]
-            if next_token['type'] == "Variable":
-                if next_token['token'] in self.symbol_table:
-                    variable = next_token['token']
-                    next_index+=2
-                    to_type = self.all_tokens[next_index]['token']
-                    if self.symbol_table[variable]['type'] == "NOOB":
-                        if to_type == "TROOF":
-                            return {'type': 'TROOF', 'initialized': True, 'value':"FAIL"}
-                        else:
-                            self.raise_semantic_error(next_token, f'NOOB values can only be typecasted to TROOF.')
-                    elif self.symbol_table[variable]['type'] == "NUMBR" or self.symbol_table[variable]['type'] == "NUMBAR":
-                        if self.symbol_table[variable]['type'] == "NUMBR" and to_type == "NUMBAR":
-                            return {'type': 'NUMBAR', 'initialized': True, 'value':float(self.symbol_table[variable]['value'])}
-                        elif self.symbol_table[variable]['type'] == "NUMBAR" and to_type == "NUMBR":
-                            return {'type': 'NUMBAR', 'initialized': True, 'value':int(self.symbol_table[variable]['value'])}
-                        elif to_type == "YARN":
-                            return{'type': 'YARN', 'initialized': True, 'value':f'"{(self.symbol_table[variable]['value'])}"'}
-                        elif to_type == "TROOF":
-                            print("PANALO")
-                            bool_val = bool(self.symbol_table[variable]['value'])
-                            print(bool_val)
-                            if bool_val == True:
-                                print("KUHA")
-                                self.IT = 'WIN'
-                                return
-                            else:
-                                return{'type': 'TROOF', 'initialized': True, 'value':'FAIL'}
-                        else:
-                            self.raise_semantic_error(next_token, f'NUMBR/NUMBAR cannot be casted into NOOB.')
-                    elif self.symbol_table[variable]['type'] == "YARN":
-                        if to_type == "NUMBR":
-                            return{'type': 'NUMBR', 'initialized': True, 'value':int(self.symbol_table[variable]['value'])}
-                        elif to_type == "NUMBAR":
-                            return {'type': 'NUMBAR', 'initialized': True, 'value':float(self.symbol_table[variable]['value'])}
-                        elif to_type == "TROOF":
-                            bool_val = bool(self.symbol_table[variable]['value'])
-                            if bool_val == True:
-                                return {'type': 'TROOF', 'initialized': True, 'value':'WIN'}
-                            else:
-                                return {'type': 'TROOF', 'initialized': True, 'value':'FAIL'}
-                        else:
-                            self.raise_semantic_error(next_token, f'YARN cannot be casted into NOOB.')
-                    elif self.symbol_table[variable]['type'] == "TROOF":
-                        bool_val = True if self.symbol_table[variable]['value'] == "WIN" else False
-                        if to_type == "NUMBR":
-                            return {'type': 'NUMBR', 'initialized': True, 'value':int(bool_val)}
-                        elif to_type == "NUMBAR":
-                            return {'type': 'NUMBAR', 'initialized': True, 'value':float(bool_val)}
-                        elif to_type == "YARN":
-                            return {'type': 'TROOF', 'initialized': True, 'value':f'"{self.symbol_table[variable]['value']}'}
-                        else:
-                            self.raise_semantic_error(next_token, f'YARN cannot be casted into NOOB.')
-                    
-                        
-
-
-
 
     def execute_math(self,index, math_stack):
         current_index = index
@@ -824,36 +643,46 @@ class SemanticAnalyzer:
                 math_stack.append(min(a,b))
         # print(math_stack)
         self.IT = math_stack[0]
-
+        return current_index
 
     def visible(self, index):
-        next_token = self.all_tokens[index+1]
-        # print(next_token['token'])
-        if next_token['type'] in ["NUMBR", "NUMBAR", "YARN", "TROOF"]:
-            if next_token['type'] == "YARN":
-                self.IT = next_token['token'][1:len(next_token['token'])]
-            else:
-                self.IT = next_token['token']
-            self.log_to_console(f"> {self.IT}")
-        elif next_token['type'] == "Variable":
-            if type(self.symbol_table[next_token['token']]['value']) == str and '\"' in self.symbol_table[next_token['token']]['value']:
-                self.IT =self.symbol_table[next_token['token']]['value'][1:-1]
-            else:
-                self.IT = self.symbol_table[next_token['token']]['value']
-            self.log_to_console(f'> {self.IT}')
-        elif next_token['type'] == "Mathematical Operator":
-            self.execute_math(index, [])
-            self.log_to_console(f'> {self.IT}')
-        elif next_token['type'] == "Typecast" and next_token['token'] == "MAEK":
-            print("TANGA")
-            self.execute_typecasting(self.all_tokens[index], index)
-            print(self.IT)
-            self.log_to_console(f'> {self.IT}')
-        else:
-            # print(next_token['token'])
-            pass
+        next_token = self.all_tokens[index]
+        line = next_token['line']  # Track the current line
+        output = []  # To store the parts to be concatenated
+        self.IT = ""  # Reset IT to avoid carry-over
 
-        # Further checks can be added to verify function parameters, return types, etc.
+        while (next_token and next_token['line'] == line):  # Stop on new line or end
+            if next_token['type'] in ["NUMBR", "NUMBAR", "YARN", "TROOF"]:
+                if next_token['type'] == "YARN":
+                    output.append(next_token['token'][1:len(next_token['token']) - 1])  # Strip quotes from YARN
+                else:
+                    output.append(str(next_token['token']))  # Convert to string for concatenation
+            elif next_token['type'] == "Variable":
+                value = self.symbol_table[next_token['token']]['value']
+                output.append(
+                    value[1:-1] if isinstance(value, str) and '"' in value else str(value)
+                )  # Handle Variable values
+            elif next_token['type'] == "Mathematical Operator":
+                index = self.execute_math(index, []) - 1
+                output.append(str(self.IT))  # Add math result as string
+            elif next_token['type'] == "Logical Operator":
+                index = self.execute_comparison(index) - 1
+                if self.IT == True:
+                    output.append("WIN")
+                else:
+                    output.append("FAIL")
+            elif next_token['type'] in ["Concatenate", "Connector", "Input/Output"]:
+                pass  # Handle explicit concatenation
+            else:
+                print(f"Unhandled token: {next_token}")  # Debug: Unsupported token types
+
+            # Advance to the next token
+            index += 1
+            next_token = self.all_tokens[index] if index < len(self.all_tokens) else None
+
+        # Concatenate all parts and update self.IT
+        self.IT = ''.join(output)
+        self.log_to_console(f"> {self.IT}")  # Log the final result
 
     def handle_loop_scope(self, token):
         # Add loop-related scope management

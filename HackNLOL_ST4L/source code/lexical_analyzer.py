@@ -25,10 +25,9 @@ constructs = set([
     "HAI", "KTHXBYE", "WAZZUP", "BUHBYE", "BTW", "OBTW", "TLDR", "I HAS A", "ITZ", "R",
     "SUM OF", "DIFF OF", "PRODUKT OF", "QUOSHUNT OF", "MOD OF", "BIGGR OF", "SMALLR OF",
     "BOTH OF", "EITHER OF", "WON OF", "NOT", "ANY OF", "ALL OF", "BOTH SAEM", "DIFFRINT",
-    "SMOOSH", "MAEK", "A", "IS NOW A", "VISIBLE", "GIMMEH", "O RLY?", "YA RLY", "MEBBE",
+    "SMOOSH", "MAEK A", "A", "IS NOW A", "VISIBLE", "GIMMEH", "O RLY?", "YA RLY", "MEBBE",
     "NO WAI", "OIC", "WTF?", "OMG", "OMGWTF", "IM IN YR", "UPPIN", "NERFIN", "YR", "TIL",
-    "WILE", "IM OUTTA YR", "HOW IZ I", "IF U SAY SO", "GTFO", "FOUND YR", "I IZ", "MKAY", "AN",
-    "YARN", "NUMBAR", "NUMBR", "TROOF", "LITERAL", "WIN", "FAIL"
+    "WILE", "IM OUTTA YR", "HOW IZ I", "IF U SAY SO", "GTFO", "FOUND YR", "I IZ", "MKAY", "AN"
 ])
 
 program_delimiters = {"HAI", "KTHXBYE"}
@@ -45,36 +44,31 @@ return_statements = {"FOUND YR", "GTFO"}
 function_call = {"I IZ", "MKAY"}
 assignment = {"R"}
 loop_op = {"UPPIN", "NERFIN"}
-typecast = {"IS NOW A", "MAEK", "A"}
+typecast = {"IS NOW A", "MAEK A"}
 other_keywords = {"WON OF","IS"}
 function_keywords = {"HOW IZ I", "IF U SAY SO"}
 loop_keywords = {"IM IN YR", "IM OUTTA YR"}
 concatenate = {"SMOOSH", "+"}
 comments = {"BTW", "OBTW", "TLDR"}
-data_type = { "YARN", "NUMBAR", "NUMBR", "TROOF", "LITERAL"}
-troof = {"WIN", "FAIL"}
 
 # Regex patterns for literals
 literal_rules = [
     r'"([^"]*)"',               # String literals
     r"\s-?[0-9]*\.[0-9]+", # Floating-point literals
     r"\s-?[0-9]+",           # Integer literals
-    r"(WIN|FAIL)\s",           # Boolean literals
-    r"(TROOF|NOOB|NUMBR|NUMBAR|YARN|TYPE)\s"  # Type literals
+    r"(WIN|FAIL)",           # Boolean literals
+    r"(TROOF|NOOB|NUMBR|NUMBAR|YARN|TYPE)"  # Type literals
 ]
 
 # Regex pattern for identifiers
 identifier_rule = r"[a-zA-Z][a-zA-Z0-9_]*"
 code_line = []
 
-
-import re
-
 def tokenize_line(line, lexemes, all_tokens, line_cnt):
     # Track positions of all found tokens to avoid overlap
     positions = []
 
-    literaltype_arr = ["YARN", "NUMBAR", "NUMBR", "TROOF"]
+    literaltype_arr = ["YARN", "NUMBAR", "NUMBR", "TROOF", "LITERAL"]
 
     # Handle inline comments
     btw_match = re.search(r"\bBTW\b", line)
@@ -101,27 +95,17 @@ def tokenize_line(line, lexemes, all_tokens, line_cnt):
                 lexeme = "O RLY?"
             elif lexeme == "WTF":
                 lexeme = "WTF?"
-            
+
             # Classify the keyword
             token_type = classify_keyword(lexeme)
-            if token_type == "TROOF":
-                lexemes["literals"].append(lexeme)
-                all_tokens.append({
-                    "token": lexeme,
-                    "type": "TROOF",
-                    "line": line_cnt,
-                    "start": start,
-                    "end": end
-                })
-            else:
-                lexemes["keywords"].append(lexeme)
-                all_tokens.append({
-                    "token": lexeme,
-                    "type": token_type,
-                    "line": line_cnt,
-                    "start": start,
-                    "end": end
-                })
+            lexemes["keywords"].append(lexeme)
+            all_tokens.append({
+                "token": lexeme,
+                "type": token_type,
+                "line": line_cnt,
+                "start": start,
+                "end": end
+            })
             positions.append((start, end))
 
     # Identify literals
@@ -140,7 +124,6 @@ def tokenize_line(line, lexemes, all_tokens, line_cnt):
                     "end": end
                 })
                 positions.append((start, end))
-          
 
     # Identify identifiers
     identifiers = re.finditer(identifier_rule, line)
@@ -149,6 +132,7 @@ def tokenize_line(line, lexemes, all_tokens, line_cnt):
         if not is_within_positions((start, end), positions):
             identifier_text = identifier.group().strip()
             if identifier_text not in constructs:
+                
                 identifier_type = classify_identifier(identifier_text, line[:start])
                 lexemes["identifiers"].append(identifier_text)
                 all_tokens.append({
@@ -243,34 +227,26 @@ def classify_keyword(lexeme):
         return "Comment"
     elif lexeme in typecast:
         return "Typecast"
-    elif lexeme in data_type:
-        return "Type"
-    elif lexeme in troof:
-        return "TROOF"
     else:
         return "Other Keyword"
 
 
 def classify_identifier(identifier_text, context):
-    """Classify an identifier based on the previous token (lexeme)."""
+    """Classify an identifier based on the previous tokens (context)."""
     
     # Ensure there's some context before the identifier
     if context.strip():  # Check if the context is not empty or just whitespace
-        prev_tokens = context.strip().split()  # Split the context into words
-        if prev_tokens:  # Ensure there's at least one word before the identifier
-            prev_token = prev_tokens[-1]  # Get the last word before the identifier
-            
-            # If the previous token is part of a loop-related keyword
-            if prev_token in loop_keywords:
-                return "Loop"  # The identifier is part of a loop
-            
-            # If the previous token is part of a function-related keyword
-            if prev_token in function_keywords:
-                return "Function"  # The identifier is part of a function
-    
+        prev_tokens = context.strip().split()  # Split the context into tokens
+        if len(prev_tokens) > 0:  # Ensure there's at least one token to check
+            # Check for loop or function keywords in the previous tokens
+            for token in prev_tokens[-3:]:  # Check the last 3 tokens (or adjust as needed)
+                if token in loop_keywords:
+                    return "Loop"  # The identifier is part of a loop
+                if token in function_keywords:
+                    return "Function"  # The identifier is part of a function
+                
     # Default classification if no loop or function context is found
     return "Variable"
-
 
 def analyze_code(code):
     lexemes = {"keywords": [], "literals": [], "identifiers": [], "comments": []}
@@ -285,3 +261,4 @@ def analyze_code(code):
     # Sort tokens by line and position
     all_tokens.sort(key=lambda x: (x['line'], x['start']))
     return all_tokens
+
