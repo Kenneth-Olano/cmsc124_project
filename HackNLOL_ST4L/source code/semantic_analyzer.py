@@ -81,7 +81,7 @@ class SemanticAnalyzer:
             next_token = self.getnext()
             self.math_checktype(token)
             self.execute_math(self.current_index, [])
-        elif (token_type == 'Input/Output') and token_value == 'VISIBLE':
+        elif (token_type == 'Input/Output') and token_value == 'VISIBLE' and self.inFunction==False:
             self.visible(self.current_index)
         elif token_type == "Typecast":
             self.execute_typecast(self.current_index)
