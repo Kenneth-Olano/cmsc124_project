@@ -125,7 +125,7 @@ class LOLcodeApp:
 
             # Syntax and Semantic Analysis
             syntax_analyzer = SyntaxAnalyzer(all_tokens, self.console_text)
-            func_dict = syntax_analyzer.parse_program()
+            func_dict, all_tokens = syntax_analyzer.parse_program()
             semantic_analyzer = SemanticAnalyzer(all_tokens, func_dict, self.console_text)
             semantic_analyzer.analyze()
 
