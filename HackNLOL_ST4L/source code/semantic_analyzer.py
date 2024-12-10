@@ -704,11 +704,13 @@ class SemanticAnalyzer:
                     elif current_token['token'] == "FAIL": 
                         math_stack.append(0)
                 elif current_token['type'] == "YARN":
+                    string = current_token['token'][1:len(current_token['token'])-1]
+                    print(string)
                     try:
-                        if '.' in current_token['token']:
-                            math_stack.append(float(current_token['token'])) 
+                        if '.' in string:
+                            math_stack.append(float(string)) 
                         else:
-                            math_stack.append(int(current_token['token'])) 
+                            math_stack.append(int(string)) 
                     except:
                         self.raise_semantic_error(current_token, f'Literal {current_token['token']} should be type NUMBR or NUMBAR.')
             elif current_token['type'] == "Variable":
@@ -733,6 +735,7 @@ class SemanticAnalyzer:
                 else:
                     break
             stack_len = len(math_stack)
+            # print(math_stack)
             if len(math_stack) >= 3 and ((type(math_stack[stack_len-1]) == int) or (type(math_stack[stack_len-1]) == float)) and ((type(math_stack[stack_len-2]) == int) or (type(math_stack[stack_len-2]) == float)):
                 b = math_stack.pop()
                 a = math_stack.pop()
@@ -758,6 +761,7 @@ class SemanticAnalyzer:
             next_token = self.all_tokens[current_index+1]
             current_line = current_token['line']
             next_line = next_token['line']
+            
         if len(math_stack) >= 3 and ((type(math_stack[len(math_stack)-1]) == int) or (type(math_stack[len(math_stack)-1]) == float)) and ((type(math_stack[len(math_stack)-2]) == int) or (type(math_stack[len(math_stack)-2]) == float)):
             b = math_stack.pop()
             a = math_stack.pop()
