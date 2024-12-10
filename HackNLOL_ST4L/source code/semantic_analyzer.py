@@ -16,6 +16,7 @@ class SemanticAnalyzer:
         self.function_dict = function_dict
         self.symbol_table = {}  # Stores declared variables and their types
         self.function_table = {}  # Stores functions and their return types
+        self.loop_table = {}
         self.scope_stack = []  # Stack to manage scopes (e.g., for functions and loops)
         self.current_index = 0  # Pointer to the current token
         self.current_token = self.all_tokens[self.current_index] if self.all_tokens else None
@@ -96,7 +97,6 @@ class SemanticAnalyzer:
         elif token_type == 'Function Delimiter' and token_value == "IF U SAY SO":
             self.inFunction = False
         elif token_type == 'Comment':
-            print(f"Skipping comment: {self.current_token}")
             self.advance()
             
         elif token_type == 'Function Call' and token_value == "I IZ":
@@ -106,9 +106,9 @@ class SemanticAnalyzer:
             self.math_checktype(token)
             next_token = self.getnext()
             self.execute_math(self.current_index+1, [])
-        # elif token_type == 'Loop Delimiter':
-        #     # Check if we are inside a loop for variable scope management
-        #     self.handle_loop_scope(token)
+        elif token_type == 'Loop Delimiter':
+            # Check if we are inside a loop for variable scope management
+            self.parse_loop()
         elif token_type == "Variable" and self.all_tokens[self.current_index+1]['type'] == "Switch":
             if token_value in self.symbol_table:
                 self.IT = self.symbol_table[token_value]
@@ -156,6 +156,79 @@ class SemanticAnalyzer:
                         else:
                             self.raise_semantic_error(var, f"cannot be typecasted to {newtype['token']}")  
         print(self.IT)
+    def parse_loop(self):
+        """Handles loop parsing and execution."""
+        self.advance()  # Advance to loop label
+        label = self.current_token['token']
+        if label not in self.loop_table:
+            self.loop_table[label] = []
+        self.advance()  # Advance to operation (e.g., UPPIN or NERFIN)
+
+        operation = self.current_token['token']
+        self.advance()  # Advance to the variable
+        self.advance()  # Skip "YR"
+        
+        variable = self.current_token['token']
+
+        if variable not in self.symbol_table:
+            self.raise_error(f"Variable '{variable}' not declared in symbol table.")
+        else:
+            self.advance()  # Advance to the loop type (TIL or WILE)
+
+            if self.current_token['type'] == "Loop Type":
+                loop_type = self.current_token['token']
+                self.advance()  # Skip the "condition" token
+                loop_start_index = self.current_index
+
+                # Start loop execution
+                while True:
+                    self.current_index = loop_start_index
+                    self.current_token = self.all_tokens[self.current_index]
+
+                    # Evaluate the loop condition using the comparison helper
+                    self.current_index = self.execute_comparison(self.current_index)  # Get the final comparison result
+
+                    condition_met = self.IT  # The result of the comparison will be stored in self.IT
+                    if (loop_type == "WILE" and not condition_met) or (loop_type == "TIL" and condition_met):
+                        break
+
+                    # Process loop body
+                    while self.current_token and self.current_token['type'] != "Loop Delimiter":
+                        self.process_token(self.current_token)
+                        self.advance()
+
+                    # Perform loop operation (UPPIN or NERFIN)
+                    if operation == "UPPIN":
+                        if isinstance(self.symbol_table[variable]['value'], str):
+                            try:
+                                # Convert to int for arithmetic operation
+                                self.symbol_table[variable]['value'] = int(self.symbol_table[variable]['value'])
+                            except ValueError:
+                                self.raise_error(f"Cannot increment non-numeric value in variable '{variable}'")
+                        self.symbol_table[variable]['value'] += 1
+                    elif operation == "NERFIN":
+                        if isinstance(self.symbol_table[variable]['value'], str):
+                            try:
+                                # Convert to int for arithmetic operation
+                                self.symbol_table[variable]['value'] = int(self.symbol_table[variable]['value'])
+                            except ValueError:
+                                self.raise_error(f"Cannot decrement non-numeric value in variable '{variable}'")
+                        self.symbol_table[variable]['value'] -= 1
+
+                    # Advance to the next token
+                    self.advance()
+
+                # End loop (IM OUTTA YR)
+                
+                while self.current_token['type'] != "Loop Delimiter":
+                    self.advance()
+                self.advance() #loop variabl
+            else:
+                self.raise_error("Invalid loop type. Expected 'TIL' or 'WILE'.")
+
+    
+
+
 
     def execute_if_else(self, index):
         """
@@ -164,11 +237,10 @@ class SemanticAnalyzer:
         """
         self.current_index = index
         self.current_token = self.all_tokens[self.current_index]
-        print(self.current_token['token'])
+
 
         # Determine branch to execute based on self.IT
         if self.IT:  # IT is True (WIN), execute YA RLY branch
-            print(f"IT is True, looking for 'YA RLY' branch at index {self.current_index}")
             if self.current_token['token'] != "YA RLY":
                 raise SyntaxError("Expected 'YA RLY' after 'O RLY?' for True branch.")
 
@@ -177,7 +249,6 @@ class SemanticAnalyzer:
 
             # Process the statements in the true branch until NO WAI or OIC
             while self.current_token['token'] not in ["NO WAI", "OIC"]:
-                print(f"Executing YA RLY statement: {self.current_token}")
                 self.execute_statement(self.current_token, self.current_index)
                 self.current_index += 1
                 if self.current_index >= len(self.all_tokens):
@@ -186,19 +257,17 @@ class SemanticAnalyzer:
 
             # Skip NO WAI block (if present) and proceed to OIC
             while self.current_token['token'] != "OIC":
-                # print(f"Skipping token in NO WAI block: {self.current_token}")
+
                 self.current_index += 1
                 if self.current_index >= len(self.all_tokens):
                     raise IndexError("Reached end of tokens while skipping NO WAI block.")
                 self.current_token = self.all_tokens[self.current_index]
 
         else:  # IT is False (FAIL), execute NO WAI branch
-            print(f"IT is False, looking for 'NO WAI' branch at index {self.current_index}")
 
             # Skip YA RLY block if it exists
             if self.current_token['token'] == "YA RLY":
                 while self.current_token['token'] not in ["NO WAI", "OIC"]:
-                    # print(f"Skipping token in YA RLY block: {self.current_token}")
                     self.current_index += 1
                     if self.current_index >= len(self.all_tokens):
                         raise IndexError("Reached end of tokens while skipping YA RLY block.")
@@ -210,7 +279,7 @@ class SemanticAnalyzer:
                 self.current_token = self.all_tokens[self.current_index]
 
                 while self.current_token['token'] != "OIC":
-                    # print(f"Executing NO WAI statement: {self.current_token}")
+
                     self.execute_statement(self.current_token, self.current_index)
                     self.current_index += 1
                     if self.current_index >= len(self.all_tokens):
@@ -220,9 +289,6 @@ class SemanticAnalyzer:
         # Ensure we end with OIC
         if self.current_token['token'] != "OIC":
             raise SyntaxError("Expected 'OIC' to close if-else block.")
-
-        print(f"End of if-else block at index {self.current_index}: {self.current_token}")
-
 
 
 
@@ -432,6 +498,11 @@ class SemanticAnalyzer:
                 variable = list(self.symbol_table)[len(self.symbol_table)-1]
                 self.symbol_table[variable]['type'] = next_token['type']
                 self.symbol_table[variable]['initialized'] = True
+                self.symbol_table[variable]['value'] = next_token['token'] 
+                try:
+                    self.symbol_table[variable]['value'] = int(next_token['token'])  # Convert the token to an integer
+                except ValueError:
+                    self.raise_error(f"Cannot convert '{next_token['token']}' to an integer.")  # Raise an error if it can't be converted
                 self.symbol_table[variable]['value'] = next_token['token']
             elif next_token['type'] == "Typecast":
                 self.execute_typecast(self.current_index)
@@ -446,6 +517,8 @@ class SemanticAnalyzer:
                 self.raise_semantic_error(self.current_token, f"Variable '{variable_name}' is not declared.")
         else:
             self.symbol_table[variable_name]['initialized'] = True
+            
+            
 
     def process_function(self, token):
         token_index = self.current_index+1
@@ -468,10 +541,8 @@ class SemanticAnalyzer:
                             break
                         if (self.all_tokens[token_index])['token'] not in self.symbol_table.keys():
                             self.symbol_table[(self.all_tokens[token_index])['token']] = {'type': 'NOOB', 'initialized': False, 'value':"NOOB"}
-                        # print(self.symbol_table)
                     elif (self.all_tokens[token_index])['type'] == "Function Parameter":
                         self.symbol_table[(self.all_tokens[token_index])['token']] = {'type': 'NOOB', 'initialized': False, 'value':"NOOB"}
-                     
         else:
             # Function already declared, check parameters and types if necessary
             self.raise_semantic_error(self.current_token, f"Function '{function_name}' is already declared.")
@@ -485,7 +556,7 @@ class SemanticAnalyzer:
         next_token = self.getnext()
         function_name = next_token['token']
         function_index = (self.function_table[function_name])['index']
-        # print(self.function_table)
+
         
         if function_name not in self.function_table:
             self.raise_semantic_error(self.current_token, f"Function '{function_name}' is not declared. Call")
@@ -497,9 +568,7 @@ class SemanticAnalyzer:
                 token_index+=1
                 if (self.all_tokens[token_index])['type'] == "Variable":
                     if (self.all_tokens[token_index])['token'] not in self.symbol_table:
-                        # print((self.all_tokens[token_index])['token'])
                         self.raise_semantic_error((self.all_tokens[token_index]), f'Variable {(self.all_tokens[token_index])['token']} is not declared.')
-                        # print(f'Error in {(self.all_tokens[token_index])['token']}')
                         break
                     else:
                         actual_parameters.append((self.all_tokens[token_index])['token'])
@@ -530,6 +599,7 @@ class SemanticAnalyzer:
             self.process_token(self.all_tokens[index+1])
         elif token['token'] == "GTFO":
             self.IT = "NOOB"
+
 
 
     def execute_function(self, function_name, function_index):
@@ -599,7 +669,6 @@ class SemanticAnalyzer:
                         self.raise_semantic_error(current_token, f'Literal {current_token['token']} should be type NUMBR or NUMBAR.')
             elif current_token['type'] == "Variable":
                 if current_token['token'] in self.symbol_table and (self.symbol_table[current_token['token']])['initialized'] == True:
-                    # print(current_token['token'])
                     if type(self.symbol_table[current_token['token']]['value']) == int:
                         math_stack.append(self.symbol_table[current_token['token']]['value'])
                     elif type(self.symbol_table[current_token['token']]['value']) == float:
@@ -619,7 +688,6 @@ class SemanticAnalyzer:
                                 self.raise_semantic_error(current_token, f'Variable {current_token['token']} should be type NUMBR or NUMBAR.')
                 else:
                     break
-            # print(math_stack)
             stack_len = len(math_stack)
             if len(math_stack) >= 3 and ((type(math_stack[stack_len-1]) == int) or (type(math_stack[stack_len-1]) == float)) and ((type(math_stack[stack_len-2]) == int) or (type(math_stack[stack_len-2]) == float)):
                 b = math_stack.pop()
@@ -639,7 +707,6 @@ class SemanticAnalyzer:
                     math_stack.append(max(a,b))
                 elif (op == '<'):
                     math_stack.append(min(a,b))
-                # print(math_stack)
             current_index +=1
             current_token = self.all_tokens[current_index]
             if current_index == len(self.all_tokens)-1:
@@ -647,7 +714,6 @@ class SemanticAnalyzer:
             next_token = self.all_tokens[current_index+1]
             current_line = current_token['line']
             next_line = next_token['line']
-            # print(math_stack)
         if len(math_stack) >= 3 and ((type(math_stack[len(math_stack)-1]) == int) or (type(math_stack[len(math_stack)-1]) == float)) and ((type(math_stack[len(math_stack)-2]) == int) or (type(math_stack[len(math_stack)-2]) == float)):
             b = math_stack.pop()
             a = math_stack.pop()
@@ -666,9 +732,7 @@ class SemanticAnalyzer:
                 math_stack.append(max(a,b))
             elif (op == '<'):
                 math_stack.append(min(a,b))
-        # print(math_stack)
         self.IT = math_stack[0]
-        # print(self.IT)
         return current_index
 
     def visible(self, index):
@@ -676,7 +740,6 @@ class SemanticAnalyzer:
         line = next_token['line']  # Track the current line
         output = []  # To store the parts to be concatenated
         output_string = ""
-          # Reset IT to avoid carry-over
 
         while (next_token and next_token['line'] == line):  # Stop on new line or end
             if next_token['type'] in ["NUMBR", "NUMBAR", "YARN", "TROOF"]:
@@ -685,7 +748,6 @@ class SemanticAnalyzer:
                 else:
                     output.append(str(next_token['token']))  # Convert to string for concatenation
             elif next_token['token'] == "IT":
-                print(self.IT)
                 output.append(str(self.IT))
             elif next_token['type'] == "Variable":
                 value = self.symbol_table[next_token['token']]['value']
@@ -697,7 +759,6 @@ class SemanticAnalyzer:
                 output.append(str(self.IT))  # Add math result as string
             elif next_token['type'] == "Logical Operator":
                 index = self.execute_comparison(index)
-                print(self.all_tokens[index]['token'])
                 if self.IT == True:
                     output.append("WIN")
                 else:
@@ -705,7 +766,8 @@ class SemanticAnalyzer:
             elif next_token['type'] in ["Concatenate", "Connector", "Input/Output"]:
                 pass  # Handle explicit concatenation
             else:
-                print(f"Unhandled token: {next_token}")  # Debug: Unsupported token types
+                pass
+
 
             # Advance to the next token
             index += 1
@@ -713,8 +775,9 @@ class SemanticAnalyzer:
             
 
         # Concatenate all parts and update self.IT
-        output_string = ''.join(output)
-        self.log_to_console(f"> {output_string}")  # Log the final result
+        self.IT = ''.join(output)
+        self.log_to_console(f"> {self.IT}")  # Log the final result
+
 
     def execute_comparison(self, index):
         """
@@ -723,6 +786,7 @@ class SemanticAnalyzer:
         """
         stack = []
         self.current_index = index
+        start_line = self.all_tokens[self.current_index]['line']
 
         # Helper function to evaluate an operation with two operands
         def evaluate_operation(operator, operand1, operand2):
@@ -740,6 +804,9 @@ class SemanticAnalyzer:
         # Iterate through tokens starting from the given index
         while self.current_index < len(self.all_tokens):
             self.current_token = self.all_tokens[self.current_index]
+
+            if self.current_token['line'] != start_line:
+                break
             
 
             if self.current_token['type'] in ["NUMBR", "NUMBAR", "Variable"]:
@@ -770,27 +837,20 @@ class SemanticAnalyzer:
             self.current_index += 1  
             
 
-        # print(self.all_tokens[index])
         # Final result is the only element left in the stack
         if len(stack) == 1:
             self.IT = stack.pop()
         else:
             raise SyntaxError("Invalid prefix notation in comparison expression.")
         
-        # print(self.IT)
         
         return self.current_index
-
-
-    def handle_loop_scope(self, token):
-        # Add loop-related scope management
-        # Loops create a new scope for variables, e.g., "IM IN YR"
-        self.scope_stack.append({'type': 'loop', 'token': token})
+    
+                    
 
     def check_uninitialized_variables(self):
         for variable, data in self.symbol_table.items():
             if (not data['initialized']):
-                # print(data['initialized'])
                 self.raise_semantic_error(self.current_token, f"Variable '{variable}' is used before initialization.")
 
     def raise_error(self, expected):

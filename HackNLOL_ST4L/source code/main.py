@@ -120,13 +120,12 @@ class LOLcodeApp:
             all_tokens = analyze_code(code)
 
             # Display tokens in the treeview
-            
+            for token in all_tokens:
+                self.tokens_treeview.insert("", "end", values=(token['token'], token['type']))
 
             # Syntax and Semantic Analysis
             syntax_analyzer = SyntaxAnalyzer(all_tokens, self.console_text)
-            func_dict, all_tokens = syntax_analyzer.parse_program()
-            for token in all_tokens:
-                self.tokens_treeview.insert("", "end", values=(token['token'], token['type']))
+            func_dict = syntax_analyzer.parse_program()
             semantic_analyzer = SemanticAnalyzer(all_tokens, func_dict, self.console_text)
             semantic_analyzer.analyze()
 
