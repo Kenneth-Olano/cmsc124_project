@@ -90,7 +90,10 @@ class SemanticAnalyzer:
         elif token_type == 'Function Delimiter' and token_value == "HOW IZ I":
             # Function declaration or call (e.g., "HOW IZ I")
             self.process_function(token)
-        
+        elif token_type == 'Comment':
+            print(f"Skipping comment: {self.current_token}")
+            self.advance()
+            
         elif token_type == 'Function Call' and token_value == "I IZ":
             # Check the function call (e.g., "I IZ")
             self.check_function_call(token)
@@ -114,9 +117,11 @@ class SemanticAnalyzer:
             # Inequality comparison (e.g., "DIFFRINT x AND y")
             self.execute_comparison(self.current_index)
 
-        elif token_value == "O RLY?":
+        elif token_value == "YA RLY" and token_type == "Control Flow":
             # Start of an if-block (e.g., "O RLY? x")
             self.execute_if_else(self.current_index)
+
+        
 
 
     def execute_comparison(self, index):
@@ -124,7 +129,6 @@ class SemanticAnalyzer:
         Executes comparison and relational operations using a stack to support prefix notation.
         Handles BOTH SAEM, DIFFRINT, BIGGR OF, and SMALLR OF, where operations are read first.
         """
-        self.IT = None
         stack = []
         self.current_index = index
 
@@ -179,73 +183,78 @@ class SemanticAnalyzer:
         else:
             raise SyntaxError("Invalid prefix notation in comparison expression.")
         
+        # print(self.IT)
+        
         return self.current_index
 
 
     def execute_if_else(self, index):
         """
-        Executes an if-else block based on the value of self.IT.
-        Evaluates conditions for YA RLY and NO WAI, and executes the respective branch.
+        Executes an if-else block starting at 'O RLY?'.
+        Based on the value of self.IT, evaluates and executes the respective branch.
         """
         self.current_index = index
         self.current_token = self.all_tokens[self.current_index]
+        print(self.current_token['token'])
 
-        # Check for "O RLY?" which starts the if-else block
-        if self.current_token['token'] != "O RLY?":
-            raise SyntaxError(f"Expected 'O RLY?' at index {index}, but found {self.current_token['token']}")
-
-        self.current_index += 1
-        self.current_token = self.all_tokens[self.current_index]
-
+        # Determine branch to execute based on self.IT
         if self.IT:  # IT is True (WIN), execute YA RLY branch
+            print(f"IT is True, looking for 'YA RLY' branch at index {self.current_index}")
             if self.current_token['token'] != "YA RLY":
                 raise SyntaxError("Expected 'YA RLY' after 'O RLY?' for True branch.")
-            
+
             self.current_index += 1
             self.current_token = self.all_tokens[self.current_index]
 
-            # Process the statements in the true branch
+            # Process the statements in the true branch until NO WAI or OIC
             while self.current_token['token'] not in ["NO WAI", "OIC"]:
+                print(f"Executing YA RLY statement: {self.current_token}")
                 self.execute_statement(self.current_token, self.current_index)
                 self.current_index += 1
                 if self.current_index >= len(self.all_tokens):
-                    raise IndexError("current_index out of range while processing YA RLY block!")
+                    raise IndexError("Reached end of tokens while processing YA RLY block.")
                 self.current_token = self.all_tokens[self.current_index]
 
-            # Skip the NO WAI block (if it exists)
-            if self.current_token['token'] == "NO WAI":
-                while self.current_token['token'] != "OIC":
-                    self.current_index += 1
-                    if self.current_index >= len(self.all_tokens):
-                        raise IndexError("current_index out of range while skipping NO WAI block!")
-                    self.current_token = self.all_tokens[self.current_index]
+            # Skip NO WAI block (if present) and proceed to OIC
+            while self.current_token['token'] != "OIC":
+                print(f"Skipping token in NO WAI block: {self.current_token}")
+                self.current_index += 1
+                if self.current_index >= len(self.all_tokens):
+                    raise IndexError("Reached end of tokens while skipping NO WAI block.")
+                self.current_token = self.all_tokens[self.current_index]
 
         else:  # IT is False (FAIL), execute NO WAI branch
+            print(f"IT is False, looking for 'NO WAI' branch at index {self.current_index}")
+
+            # Skip YA RLY block if it exists
             if self.current_token['token'] == "YA RLY":
-                # Skip the YA RLY block
                 while self.current_token['token'] not in ["NO WAI", "OIC"]:
+                    print(f"Skipping token in YA RLY block: {self.current_token}")
                     self.current_index += 1
                     if self.current_index >= len(self.all_tokens):
-                        raise IndexError("current_index out of range while skipping YA RLY block!")
+                        raise IndexError("Reached end of tokens while skipping YA RLY block.")
                     self.current_token = self.all_tokens[self.current_index]
 
+            # Process the statements in the false branch if NO WAI exists
             if self.current_token['token'] == "NO WAI":
                 self.current_index += 1
                 self.current_token = self.all_tokens[self.current_index]
 
-                # Process the statements in the false branch
                 while self.current_token['token'] != "OIC":
+                    print(f"Executing NO WAI statement: {self.current_token}")
                     self.execute_statement(self.current_token, self.current_index)
                     self.current_index += 1
                     if self.current_index >= len(self.all_tokens):
-                        raise IndexError("current_index out of range while processing NO WAI block!")
+                        raise IndexError("Reached end of tokens while processing NO WAI block.")
                     self.current_token = self.all_tokens[self.current_index]
 
-        # Ensure the block ends with "OIC"
+        # Ensure we end with OIC
         if self.current_token['token'] != "OIC":
-            raise SyntaxError(f"Expected 'OIC' at the end of if-else block, but found {self.current_token['token']}")
+            raise SyntaxError("Expected 'OIC' to close if-else block.")
 
-        self.current_index += 1
+        print(f"End of if-else block at index {self.current_index}: {self.current_token}")
+        self.current_index += 1  # Move past OIC
+
 
 
 
@@ -269,7 +278,6 @@ class SemanticAnalyzer:
     def execute_switch(self, index):
         self.current_index = self.current_index+1
         self.current_token = self.all_tokens[self.current_index]
-        print(self.IT)
         while self.current_token['token'] != "OMGWTF":
             if self.current_token['token'] == "OMG":
                 self.current_index+=1
@@ -289,10 +297,8 @@ class SemanticAnalyzer:
                             value = self.symbol_table[self.current_token['token']]['value']
                         else:
                             self.raise_semantic_error(self.current_token['token'], f'Variable {self.current_token['token']} should be declared.')
-                    print(value)
                     if value == self.IT['value']:
                         while self.current_token['token'] != "GTFO":
-                            print(self.current_token['token'])
                             self.execute_statement(self.current_token, self.current_index)
                             self.current_index+=1
                             self.current_token = self.all_tokens[self.current_index]
@@ -344,8 +350,6 @@ class SemanticAnalyzer:
     def math_checktype(self, token):
         value = token
         value_index = self.current_index
-        # print(self.symbol_table)
-
         while True:
             value_index+=1
             value = self.all_tokens[value_index]
@@ -427,12 +431,10 @@ class SemanticAnalyzer:
                     self.symbol_table[variable]['type'] = "NUMBAR"
                 
                 self.symbol_table[variable]['value'] = self.IT
-        # print(self.symbol_table)
 
     def check_variable_assignment(self, token):
         next_token = self.getnext()
         variable_name = next_token['token'] 
-        # print(self.symbol_table)
         if variable_name not in self.symbol_table:
             if next_token['type'] in ["NUMBR", "NUMBAR", "YARN", "TROOF"]:
                 variable = list(self.symbol_table)[len(self.symbol_table)-1]
@@ -452,7 +454,7 @@ class SemanticAnalyzer:
         if function_name not in self.function_table:
             self.function_table[function_name] = {'return_type': 'undefined', 'parameters': {}, 'index':token_index}
             if function_name in self.function_dict.keys():
-                # print(self.function_dict[function_name].keys())
+
                 for parameter in self.function_dict[function_name].keys():
                     
                     self.function_table[function_name]['parameters'][parameter] = None
