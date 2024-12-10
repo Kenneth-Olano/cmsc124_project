@@ -1,5 +1,11 @@
 HAI
 
+    WAZZUP
+        I HAS A name ITZ "KEN"
+        I HAS A num1 ITZ BIGGR OF PRODUKT OF 11 AN 2 AN QUOSHUNT OF SUM OF 3 AN 5 AN 2
+        I HAS A num2 ITZ 2
+    BUHBYE
+    
     HOW IZ I addNum YR x AN YR y
         FOUND YR SUM OF x AN y
     IF U SAY SO
@@ -14,12 +20,6 @@ HAI
         VISIBLE x
         GTFO
     IF U SAY SO
-
-    WAZZUP
-        I HAS A name ITZ "KEN"
-        I HAS A num1 ITZ BIGGR OF PRODUKT OF 11 AN 2 AN QUOSHUNT OF SUM OF 3 AN 5 AN 2
-        I HAS A num2 ITZ 2
-    BUHBYE
 
     GIMMEH num1
     GIMMEH num2

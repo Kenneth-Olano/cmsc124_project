@@ -7,6 +7,7 @@ class SyntaxAnalyzer:
         self.current_token = self.tokens[self.current_index] if self.tokens else None
         self.function_dict = {}
         self.console = console_widget
+        self.inFunction = False
 
     def log_to_console(self, message):
         """Utility function to log messages to the console."""
@@ -61,7 +62,7 @@ class SyntaxAnalyzer:
         while self.current_token and self.current_token["token"] != "KTHXBYE":
             self.parse_toplevel()  # Parse statements within the program
         self.match("Program Delimiter", "KTHXBYE")  # End of the program
-        return self.function_dict
+        return self.function_dict, self.tokens
 
     def parse_toplevel(self):
         self.skip_comment()
@@ -73,7 +74,9 @@ class SyntaxAnalyzer:
         token_value = self.current_token["token"]
 
         if token_type == "Function Delimiter":
+            self.inFunction = True
             self.parse_function()
+            self.inFunction = False
         elif token_type == "Control Flow":
             self.parse_control_flow()
         elif token_type == "Switch":
@@ -238,6 +241,8 @@ class SyntaxAnalyzer:
         self.skip_comment()
         """Parse function call statements."""
         self.match("Function Call")
+        if self.current_token['type'] == "Variable":
+            self.tokens[self.current_index]['type']= "Function"
         self.match("Function")
         while self.current_token and self.current_token["token"] in ["YR", "AN"]:
             if self.current_token["token"] == "YR":
@@ -256,8 +261,11 @@ class SyntaxAnalyzer:
         self.match("Function Delimiter", "HOW IZ I")
 
         # Checks if there is function identifier
-        if self.current_token["type"] != "Function" or self.current_token["type"] != "Variable":
+        if self.current_token["type"] != "Variable":
             self.raise_error("Invalid function identifier after 'HOW IZ I'")
+        else:
+            self.tokens[self.current_index]['type']= "Function"
+            # print(self.tokens)
         self.function_dict[self.current_token['token']] = {}
         current_function =self.current_token['token']
         self.advance()
@@ -267,6 +275,7 @@ class SyntaxAnalyzer:
             if self.current_token["token"] == "YR":
                 self.advance()
                 self.function_dict[current_function][self.current_token['token']] = None
+                self.tokens[self.current_index]['type']= "Function Parameter"
                 self.match("Function Parameter")
             elif self.parse_connector("AN"):
                 pass
@@ -297,6 +306,8 @@ class SyntaxAnalyzer:
                 return_found = True
                 break
             else:
+                if self.current_token["type"] == "Variable":
+                    self.current_token["type"] == "Function Parameter"
                 self.parse_statement()
         
         if return_found == False:
