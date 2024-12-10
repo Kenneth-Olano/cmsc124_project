@@ -144,18 +144,41 @@ class SyntaxAnalyzer:
 
 
     def parse_switch(self):
+        """
+        Parse the 'WTF?' construct in LOLCODE for correct syntax.
+        Ensures valid structure for OMG, GTFO, OMGWTF, and OIC.
+        """
         self.match("Switch", "WTF?")
-        while self.current_token["token"] != "OMGWTF":
-            self.match("Switch", "OMG")
-            self.parse_value()
-            while self.current_token["token"] != "GTFO":
-                self.parse_statement()
-            self.match("Return Statement", "GTFO")
-        self.match("Switch", "OMGWTF")
+        has_default_case = False
+
         while self.current_token and self.current_token["token"] != "OIC":
-            self.parse_statement()
-        
+            if self.current_token["token"] == "OMG":
+                # Parse an individual case
+                self.match("Switch", "OMG")
+                self.parse_value()  # Ensure valid value follows OMG
+                # Parse statements inside the case
+                while self.current_token["token"] not in ["GTFO", "OMG", "OMGWTF", "OIC"]:
+                    self.parse_statement()
+                # Match GTFO if present
+                if self.current_token["token"] == "GTFO":
+                    self.match("Return Statement", "GTFO")
+
+            elif self.current_token["token"] == "OMGWTF":
+                if has_default_case:
+                    self.raise_error("Multiple default cases (OMGWTF) are not allowed.")
+                has_default_case = True
+                self.match("Switch", "OMGWTF")
+                # Parse statements inside the default case
+                while self.current_token["token"] not in ["OIC"]:
+                    self.parse_statement()
+            
+            else:
+                # Raise an error for unexpected tokens
+                self.raise_error(f"Unexpected token in switch: {self.current_token['token']}")
+
+        # Ensure we end with OIC
         self.match("Control Flow", "OIC")
+
 
     def parse_identifier(self):
         self.skip_comment()
