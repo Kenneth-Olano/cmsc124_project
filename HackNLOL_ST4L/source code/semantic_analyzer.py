@@ -82,7 +82,8 @@ class SemanticAnalyzer:
             self.execute_math(self.current_index, [])
         elif (token_type == 'Input/Output') and token_value == 'VISIBLE':
             self.visible(self.current_index)
-
+        elif token_type == "Typecasting":
+            self.execute_typecast(self.current_index)
         elif token_type == 'Assignment Operator' and token_value == "R":
             # Check if the assignment is to a valid variable
             self.check_variable_assignment(token)
@@ -127,7 +128,34 @@ class SemanticAnalyzer:
             # Start of an if-block (e.g., "O RLY? x")
             self.execute_if_else(self.current_index)
 
-
+    def execute_typecast(self, index):
+        if self.all_tokens[index]['token'] == "MAEK":
+            next_index = index+1
+            if self.all_tokens[next_index]['type'] == "Variable":
+                var = self.all_tokens[next_index]
+                if var['token'] in self.symbol_table:
+                    next_index+=1
+                    if self.all_tokens[next_index] == "A":
+                        next_index+=1
+                    newtype = self.all_tokens[next_index]
+                    if newtype['token'] == "TROOF":
+                        if var['token'] == '0' or var['token'] == '0.0' or var['token'] == '""' :
+                            self.IT = {'type': newtype['token'], 'initialized': True, 'value':"FAIL"}
+                        else:
+                            self.IT = {'type': newtype['token'], 'initialized': True, 'value':"WIN"}
+                    elif newtype['token'] == "YARN":
+                        self.IT = {'type': newtype['token'], 'initialized': True, 'value':f'"{str(self.symbol_table[var['token']]['value'])}"'}
+                    elif newtype['token'] == "NUMBAR":
+                        if var['token'].count('.') == 1:
+                            self.IT = {'type': newtype['token'], 'initialized': True, 'value':f'{float(self.symbol_table[var['token']]['value'])}'}
+                        else:
+                            self.raise_semantic_error(var, f"cannot be typecasted to {newtype['token']}")      
+                    elif newtype['token'] == "NUMBR":
+                        if var['token'].count('.') == 0:
+                            self.IT = {'type': newtype['token'], 'initialized': True, 'value':f'{int(self.symbol_table[var['token']]['value'])}'}
+                        else:
+                            self.raise_semantic_error(var, f"cannot be typecasted to {newtype['token']}")  
+        print(self.IT)
 
     def execute_if_else(self, index):
         """
@@ -404,7 +432,16 @@ class SemanticAnalyzer:
                 variable = list(self.symbol_table)[len(self.symbol_table)-1]
                 self.symbol_table[variable]['type'] = next_token['type']
                 self.symbol_table[variable]['initialized'] = True
-                self.symbol_table[variable]['value'] = next_token['token'] 
+                self.symbol_table[variable]['value'] = next_token['token']
+            elif next_token['type'] == "Typecast":
+                self.execute_typecast(self.current_index)
+                next_token = self.all_tokens[self.current_index+1]
+                variable = list(self.symbol_table)[len(self.symbol_table)-1]
+                print(self.symbol_table[variable])
+                self.symbol_table[variable]['type'] = next_token['type']
+                self.symbol_table[variable]['initialized'] = True
+                self.symbol_table[variable]['value'] = self.IT
+                print(self.symbol_table[variable])
             elif  next_token['token'] not in constructs:
                 self.raise_semantic_error(self.current_token, f"Variable '{variable_name}' is not declared.")
         else:

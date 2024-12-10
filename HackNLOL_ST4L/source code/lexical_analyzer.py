@@ -25,7 +25,7 @@ constructs = set([
     "HAI", "KTHXBYE", "WAZZUP", "BUHBYE", "BTW", "OBTW", "TLDR", "I HAS A", "ITZ", "R",
     "SUM OF", "DIFF OF", "PRODUKT OF", "QUOSHUNT OF", "MOD OF", "BIGGR OF", "SMALLR OF",
     "BOTH OF", "EITHER OF", "WON OF", "NOT", "ANY OF", "ALL OF", "BOTH SAEM", "DIFFRINT",
-    "SMOOSH", "MAEK A", "A", "IS NOW A", "VISIBLE", "GIMMEH", "O RLY?", "YA RLY", "MEBBE",
+    "SMOOSH", "MAEK", "A", "IS NOW A", "VISIBLE", "GIMMEH", "O RLY?", "YA RLY", "MEBBE",
     "NO WAI", "OIC", "WTF?", "OMG", "OMGWTF", "IM IN YR", "UPPIN", "NERFIN", "YR", "TIL",
     "WILE", "IM OUTTA YR", "HOW IZ I", "IF U SAY SO", "GTFO", "FOUND YR", "I IZ", "MKAY", "AN"
 ])
@@ -44,7 +44,7 @@ return_statements = {"FOUND YR", "GTFO"}
 function_call = {"I IZ", "MKAY"}
 assignment = {"R"}
 loop_op = {"UPPIN", "NERFIN"}
-typecast = {"IS NOW A", "MAEK A"}
+typecast = {"IS NOW A", "MAEK"}
 other_keywords = {"WON OF","IS"}
 function_keywords = {"HOW IZ I", "IF U SAY SO"}
 loop_keywords = {"IM IN YR", "IM OUTTA YR"}

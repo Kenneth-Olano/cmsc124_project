@@ -206,7 +206,7 @@ class SyntaxAnalyzer:
 
     def parse_exp_typecast(self):
         self.skip_comment()
-        self.match("Typecast", "MAEK A")
+        self.match("Typecast", "MAEK")
         self.match("Variable")
         self.match("LITERAL")
 
@@ -221,7 +221,7 @@ class SyntaxAnalyzer:
                 self.parse_logicop()
             elif self.current_token["type"] == "Concatenate":
                 self.parse_concatenate()
-            elif self.current_token["type"] == "Typecast" and self.current_token["token"] == "MAEK A":
+            elif self.current_token["type"] == "Typecast" and self.current_token["token"] == "MAEK":
                 self.parse_exp_typecast()
             elif self.current_token and self.current_token["type"] == "Variable":
                 self.parse_identifier()
